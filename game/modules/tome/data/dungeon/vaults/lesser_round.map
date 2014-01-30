@@ -1,0 +1,28 @@
+map.define("lesser_round.map")
+
+map.symbol{ symbol='.' feat=FEAT_GRASS info=CAVE_ROOM | CAVE_ICKY }
+map.symbol{ symbol=',' feat=FEAT_GRASS info=CAVE_ROOM | CAVE_ICKY }
+
+map.symbol{ symbol='%' feat=FEAT_TREES info=CAVE_ROOM | CAVE_ICKY }
+map.symbol{ symbol='#' feat=FEAT_WALL_INNER info=CAVE_ROOM | CAVE_ICKY }
+
+map.symbol{ symbol='+' feat=FEAT_DOOR_LOCKED_HEAD info=CAVE_ROOM | CAVE_ICKY }
+
+map.symbol{ symbol='*' feat=FEAT_GRASS info=CAVE_ROOM | CAVE_ICKY }
+map.symbol{ symbol='&' feat=FEAT_GRASS info=CAVE_ROOM | CAVE_ICKY }
+
+map.map
+{
+[[       %%%%%%       ]]
+[[    %%%..##..%%%    ]]
+[[  %%....####....%%  ]]
+[[ %......#**#......% ]]
+[[%...,.##+##+##.,...%]]
+[[%.,.,.#*#*&#*#.,.,.%]]
+[[%.,.,.#*#&*#*#.,.,.%]]
+[[%...,.##+##+##.,...%]]
+[[ %......#**#......% ]]
+[[  %%....####....%%  ]]
+[[    %%%..##..%%%    ]]
+[[       %%%%%%       ]]
+}

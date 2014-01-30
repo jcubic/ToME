@@ -1,0 +1,8 @@
+This directory should contain all the packs that are to be used by the
+various modules.
+For example if an author decides to do three modules:
+1) The Space War: The begginning
+2) The Space War: The coming back of the shadows
+3) The Space War: Now it's getting nasty
+Then the actual Space War settings(skills scripts, monsters, items ...)
+can be put in the pack and loaded by the modules.

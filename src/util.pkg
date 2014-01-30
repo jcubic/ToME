@@ -1,0 +1,2065 @@
+/* File: util.pkg */
+
+/*
+ * Purpose: Lua interface defitions for miscellaneous routines.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+$#include "SDL.h"
+$#include "sdl-extern.h"
+$#include "plots.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+/** @def FALSE
+ */
+#define FALSE
+
+/** @def ESCAPE
+ */
+#define ESCAPE	'\033'
+
+
+/** @name Terminal Colours
+ * @{ */
+module color
+{
+#define TERM_DARK@DARK
+#define TERM_WHITE@WHITE
+#define TERM_SLATE@SLATE
+#define TERM_ORANGE@ORANGE
+#define TERM_RED@RED
+#define TERM_GREEN@GREEN
+#define TERM_BLUE@BLUE
+#define TERM_UMBER@UMBER
+#define TERM_L_DARK@LIGHT_DARK
+#define TERM_L_WHITE@LIGHT_WHITE
+#define TERM_VIOLET@VIOLET
+#define TERM_YELLOW@YELLOW
+#define TERM_L_RED@LIGHT_RED
+#define TERM_L_GREEN@LIGHT_GREEN
+#define TERM_L_BLUE@LIGHT_BLUE
+#define TERM_L_UMBER@LIGHT_UMBER
+
+extern bool can_redefine_color;
+extern void init_tome_color(byte id, cptr name, char chr, s32b r, s32b g, s32b b);
+}
+/** @} */
+
+/* Can't define an array in a module, grrr. */
+extern byte conv_color[16];
+
+$static hooks_chain* hook_get(s32b type) { return hooks_heads[type]; }
+
+/** @name Event hooks
+ * @{ */
+module hook
+{
+enum {
+	HOOK_MONSTER_DEATH @ MONSTER_DEATH,
+	HOOK_MONSTER_REMOVED @ MONSTER_REMOVED,
+	HOOK_DO_DROP_CORPSE @ DO_DROP_CORPSE,
+	HOOK_CORPSE_CREATE_PRE @ CORPSE_CREATE_PRE,
+	HOOK_CORPSE_CREATE_POST @ CORPSE_CREATE_POST,
+	HOOK_OPEN_PRE @ OPEN_PRE,
+	HOOK_OPEN_POST @ OPEN_POST,
+	HOOK_CLOSE_PRE @ CLOSE_PRE,
+	HOOK_CLOSE_POST @ CLOSE_POST,
+	HOOK_GEN_QUEST @ GEN_QUEST,
+	HOOK_END_TURN @ END_TURN,
+	HOOK_FEELING @ FEELING,
+	HOOK_NEW_MONSTER_PRE @ NEW_MONSTER_PRE,
+	HOOK_NEW_MONSTER_POST @ NEW_MONSTER_POST,
+	HOOK_CREATE_DROP @ CREATE_DROP,
+	HOOK_GEN_LEVEL @ GEN_LEVEL,
+	HOOK_BUILD_ROOM1 @ BUILD_ROOM1,
+	HOOK_NEW_LEVEL @ NEW_LEVEL,
+	HOOK_QUEST_FINISH @ QUEST_FINISH,
+	HOOK_QUEST_FAIL @ QUEST_FAIL,
+	HOOK_GIVE_PRE @ GIVE_PRE,
+	HOOK_GIVE_POST @ GIVE_POST,
+	HOOK_CHAR_DUMP @ CHAR_DUMP,
+	HOOK_INIT_QUEST @ INIT_QUEST,
+	HOOK_WILD_GEN @ WILD_GEN,
+	HOOK_WILD_GEN_MON @ WILD_GEN_MON,
+	HOOK_DROP_PRE @ DROP_PRE,
+	HOOK_DROP_POST @ DROP_POST,
+	HOOK_DROPPED_NEAR @ DROPPED_NEAR,
+	HOOK_IDENTIFY_POST @ IDENTIFY_POST,
+	HOOK_MOVE_PRE_DIR @ MOVE_PRE_DIR,
+	HOOK_MOVE_PRE @ MOVE_PRE,
+	HOOK_MOVE_OK @ MOVE_OK,
+	HOOK_MOVE_POST @ MOVE_POST,
+	HOOK_STAY_POST @ STAY_POST,
+	HOOK_WILD_SMALL_MOVE_POST @ WILD_SMALL_MOVE_POST,
+	HOOK_WILD_LARGE_NEW_AREA_PRE @ WILD_LARGE_NEW_AREA_PRE,
+	HOOK_WILD_LARGE_NEW_AREA_POST @ WILD_LARGE_NEW_AREA_POST,
+	HOOK_STAIR_PRE @ STAIR_PRE,
+	HOOK_STAIR_DO @ STAIR_DO,
+	HOOK_STAIR_POST @ STAIR_POST,
+	HOOK_HIT_WALL @ HIT_WALL,
+	HOOK_MONSTER_AI_TARGET @ MONSTER_AI_TARGET,
+	HOOK_MONSTER_AI_MOVE @ MONSTER_AI_MOVE,
+	HOOK_PLAYER_LEVEL @ PLAYER_LEVEL,
+	HOOK_WIELD_PRE @ WIELD_PRE,
+	HOOK_WIELD_INFO @ WIELD_INFO,
+	HOOK_WIELD_POST @ WIELD_POST,
+	HOOK_INIT @ INIT,
+	HOOK_CALC_BONUS @ CALC_BONUS,
+	HOOK_CALC_POWERS @ CALC_POWERS,
+	HOOK_KEYPRESS @ KEYPRESS,
+	HOOK_KEYPRESS_UNKNOWN @ KEYPRESS_UNKNOWN,
+	HOOK_CHAT @ CHAT,
+	HOOK_MON_SPEAK @ MON_SPEAK,
+	HOOK_MKEY @ MKEY,
+	HOOK_MKEY_HIDE @ MKEY_HIDE,
+	HOOK_BIRTH_OBJECTS @ BIRTH_OBJECTS,
+	HOOK_ACTIVATE_DESC @ ACTIVATE_DESC,
+	HOOK_INIT_GAME @ INIT_GAME,
+	HOOK_ACTIVATE_POWER @ ACTIVATE_POWER,
+	HOOK_ITEM_NAME @ ITEM_NAME,
+	HOOK_SAVE_GAME @ SAVE_GAME,
+	HOOK_LOAD_GAME @ LOAD_GAME,
+	HOOK_LEVEL_REGEN @ LEVEL_REGEN,
+	HOOK_LEVEL_END_GEN @ LEVEL_END_GEN,
+	HOOK_BUILDING_ACTION @ BUILDING_ACTION,
+	HOOK_PROCESS_WORLD @ PROCESS_WORLD,
+	HOOK_PROCESS_WORLD_WILD @ PROCESS_WORLD_WILD,
+	HOOK_PROCESS_WORLD_NON_WILD @ PROCESS_WORLD_NON_WILD,
+	HOOK_WIELD_SLOT @ WIELD_SLOT,
+	HOOK_STORE_STOCK @ STORE_STOCK,
+	HOOK_STORE_BUY @ STORE_BUY,
+	HOOK_GEN_LEVEL_BEGIN @ GEN_LEVEL_BEGIN,
+	HOOK_GEN_LEVEL_AFTER_LOAD @ GEN_LEVEL_AFTER_LOAD,
+	HOOK_GET_PRE @ GET_PRE,
+	HOOK_GET_POST @ GET_POST,
+	HOOK_REDRAW @ REDRAW,
+	HOOK_RECALC_SKILLS @ RECALC_SKILLS,
+	HOOK_ENTER_DUNGEON @ ENTER_DUNGEON,
+	HOOK_ENTERED_DUNGEON @ ENTERED_DUNGEON,
+	HOOK_DIE_PRE @ DIE_PRE,
+	HOOK_DIE_POST @ DIED_POST,
+	HOOK_CALC_HP @ CALC_HP,
+	HOOK_DAM_COLOR @ DAM_TYPE_COLOR,
+	HOOK_DAM_EXEC @ DAM_TYPE_EXEC,
+	HOOK_PROJECT_P_PRE_LUA @ PROJECT_P_PRE_LUA,
+	HOOK_PROJECT_P_POST_LUA @ PROJECT_P_POST_LUA,
+	HOOK_CALC_MANA @ CALC_MANA,
+	HOOK_LOAD_GAME_END @ LOAD_GAME_END,
+	HOOK_SAVE_GAME_END @ SAVE_GAME_END,
+	HOOK_RECALL @ RECALL,
+	HOOK_FOLLOW_GOD @ FOLLOW_GOD,
+	HOOK_SACRIFICE_GOD @ SACRIFICE_GOD,
+	HOOK_BODY_PARTS @ BODY_PARTS,
+	HOOK_APPLY_MAGIC @ APPLY_MAGIC,
+	HOOK_PLAYER_EXP @ PLAYER_EXP,
+	HOOK_BIRTH @ BIRTH,
+	HOOK_CALC_LITE @ CALC_LITE,
+	HOOK_LEARN_ABILITY @ LEARN_ABILITY,
+	HOOK_GAME_START @ GAME_START,
+	HOOK_TAKEOFF_PRE @ TAKEOFF_PRE,
+	HOOK_TAKEOFF_POST @ TAKEOFF_POST,
+	HOOK_CALC_WEIGHT @ CALC_WEIGHT,
+	HOOK_FORBID_TRAVEL @ FORBID_TRAVEL,
+	HOOK_SAVE_REGISTER @ SAVE_REGISTER,
+	HOOK_FLAG_GETTER @ FLAG_GETTER,
+	HOOK_OBJECT_DESC @ OBJECT_DESC,
+	HOOK_OBJECT_VALUE @ OBJECT_VALUE,
+	HOOK_DEBUG_COMMAND @ DEBUG_COMMAND,
+	HOOK_LEVEL_LOOP @ LEVEL_LOOP,
+	HOOK_ITEM_NAME_INSERT @ ITEM_NAME_INSERT,
+	HOOK_INFO_DATA_LOADED @ INFO_DATA_LOADED,
+	HOOK_CALC_BONUS_END @ CALC_BONUS_END,
+	HOOK_MODULE_SCREEN @ MODULE_SCREEN,
+	HOOK_TARGET @ TARGET,
+	HOOK_MONSTER_LEVEL @ MONSTER_LEVEL,
+	HOOK_OBJECT_SIMILAR @ OBJECT_SIMILAR,
+	HOOK_OBJECT_ABSORB @ OBJECT_ABSORB,
+	HOOK_OBJECT_UNABSORB @ OBJECT_UNABSORB,
+	HOOK_PIETY_CHANGE @ PIETY_CHANGE,
+	HOOK_PLAYER_CAN_ENTER @ PLAYER_CAN_ENTER,
+	HOOK_DESTROY_PRE @ DESTROY_PRE,
+	HOOK_DESTROY_POST @ DESTROY_POST,
+	HOOK_PLAYER_REGEN @ PLAYER_REGEN,
+	HOOK_PLAYER_DESTROY_PRE @ PLAYER_DESTROY_PRE,
+	HOOK_PLAYER_DESTROY_POST @ PLAYER_DESTROY_POST,
+	HOOK_INIT_DONE @ INIT_DONE,
+	HOOK_DISTURB @ DISTURB,
+	HOOK_OBJECT_LEVEL_PRE @ OBJECT_LEVEL_PRE,
+	HOOK_OBJECT_LEVEL_DO @ OBJECT_LEVEL_DO,
+	HOOK_OBJECT_LEVEL_POST @ OBJECT_LEVEL_POST,
+	HOOK_MONSTER_TAKE_HIT @ MONSTER_TAKE_HIT,
+	HOOK_REPEAT_KEY_CHAIN_DESTROY @ REPEAT_KEY_CHAIN_DESTROY,
+	HOOK_PLAYER_USED_ENERGY @ PLAYER_USED_ENERGY,
+	HOOK_WILD_LARGE_CUSTOM_GENERATOR @ WILD_LARGE_CUSTOM_GENERATOR,
+	HOOK_WILD_LARGE_TWEAK_GENERATOR @ WILD_LARGE_TWEAK_GENERATOR,
+	HOOK_ALTER_GRID @ ALTER_GRID,
+	HOOK_BODY_CHANGE_PRE @ BODY_CHANGE_PRE,
+	HOOK_BODY_CHANGE @ BODY_CHANGE,
+	HOOK_BODY_CHANGE_POST @ BODY_CHANGE_POST,
+	HOOK_MON_CHANGE_FACTION_PRE @ MON_CHANGE_FACTION_PRE,
+	HOOK_MON_CHANGE_FACTION_POST @ MON_CHANGE_FACTION_POST,
+	HOOK_NEW_NEST @ NEW_NEST,
+	HOOK_NEW_PIT @ NEW_PIT,
+	HOOK_NEST_PIT_POST @ NEST_PIT_POST,
+	HOOK_MONSTER_FORBID @ MONSTER_FORBID,
+	MAX_HOOKS @ HARDCODED_MAX
+};
+
+
+extern bool process_hooks_restart@restart;
+extern void dump_hooks@dump(s32b h_idx);
+extern void add_hook_script@add_script(s32b h_idx, char *script, cptr name);
+extern void del_hook_name@del_by_name(s32b h_idx, cptr name);
+extern void lua_print_hook@print(cptr str);
+
+static hooks_chain* hook_get@__get(s32b type);
+
+/** @def HOOK_TYPE_C */
+#define HOOK_TYPE_C             0
+/** @def HOOK_TYPE_LUA */
+#define HOOK_TYPE_LUA           1
+}
+/** @} */
+
+
+/*** @struct hooks_chain
+ * @dgonly
+ * @{ */
+struct hooks_chain
+{
+	/** @var name
+	 * @brief String
+	 */
+	cptr name;
+	/** @var script
+	 * @brief String
+	 */
+	cptr script;
+	/** @var type
+	 * @brief Number
+	 */
+	byte type;
+	/** @var *next
+	 * @brief hooks_chain
+	 */
+	hooks_chain *next;
+};
+/** @} */
+
+
+/** @var turn
+ * @brief Number
+ * @note Current game turn
+ */
+extern s32b turn;
+/** @var old_turn
+ * @brief Number
+ * @note Turn when level began (feelings)
+ */
+extern s32b old_turn;
+/** @var cur_wid
+ * @brief Number
+ * @note Current dungeon width
+ */
+extern s16b cur_wid;
+/** @var cur_hgt
+ * @brief Number
+ * @note Current dungeon height
+ */
+extern s16b cur_hgt;
+
+
+$static char *path_build_lua(cptr path, cptr file){static char buf[1025]; path_build(buf, 1024, path, file); return buf;}
+static char *path_build_lua@path_build(cptr path, cptr file);
+
+
+/*** @name message
+ * @{ */
+module message
+{
+extern void flush(void);
+extern void cmsg_print(byte color, cptr msg = NULL);
+extern void msg_print(cptr msg = NULL);
+extern void message_add@add(byte type, cptr msg, byte color);
+extern void display_message@display(s32b x, s32b y, s32b split, byte color, cptr t);
+}
+/** @} */
+
+
+/*** @name term
+ * @{ */
+module term {
+/** @fn disturb(s32b stop_search, s32b flush_output)
+ * @brief Disturb the player.
+ * @param stop_search Number \n if 0, this will not disturb searching,
+ * otherwise searching is stopped.
+ * @brief Stop search?
+ * @param flush_output Number \n *unused*
+ * @brief *Unused*
+ * @return void
+ * @note
+ * Something has happened to disturb the player.
+ * The first arg indicates a major disturbance, which affects search.
+ * The second arg is currently unused, but could induce output flush.
+ * All disturbance cancels repeated commands, resting, and running.
+ * @note (see file cave.c)
+ */
+extern void disturb(s32b stop_search, s32b flush_output);
+
+/** @fn move_cursor(s32b row, s32b col)
+ * @brief Move the cursor of a terminal to row "row" and column "col".
+ * @param row Number \n the target row on the screen.
+ * @brief Row
+ * @param col Number \n the target column on the screen.
+ * @brief Column
+ * @return void
+ * @note (see file util.c)
+ */
+extern void move_cursor_relative(s32b row, s32b col);
+
+/** @var inkey_scan
+ * @brief Boolean
+ * @note
+ * If "inkey_scan" is TRUE, then we will immediately return "zero" if no
+ * keypress is available, instead of waiting for a keypress.
+ */
+extern bool inkey_scan;
+
+/** @var inkey_dir
+ * @brief Boolean
+ */
+extern bool inkey_dir;
+
+/** @fn inkey(void)
+ * @brief Get a keypress from the user.
+ * @return s32b \n the key pressed by the user.
+ * @note
+ * This function recognizes a few "global parameters".  These are variables
+ * which, if set to TRUE before calling this function, will have an effect
+ * on this function, and which are always reset to FALSE by this function
+ * before this function returns.  Thus they function just like normal
+ * parameters, except that most calls to this function can ignore
+ * them.
+ * If "inkey_xtra" is TRUE, then all pending keypresses will be flushed,
+ * and any macro processing in progress will be aborted.  This flag is
+ * set by the "flush()" function, which does not actually flush anything
+ * itself, but rather, triggers delayed input flushing via
+ * "inkey_xtra".
+ * If "inkey_scan" is TRUE, then we will immediately return "zero" if no
+ * keypress is available, instead of waiting for a
+ * keypress.
+ * If "inkey_base" is TRUE, then all macro processing will be bypassed.
+ * If "inkey_base" and "inkey_scan" are both TRUE, then this function will
+ * not return immediately, but will wait for a keypress for as long as the
+ * normal macro matching code would, allowing the direct entry of macro
+ * triggers.  The "inkey_base" flag is extremely
+ * dangerous!
+ * If "inkey_flag" is TRUE, then we will assume that we are waiting for a
+ * normal command, and we will only show the cursor if "hilite_player" is
+ * TRUE (or if the player is in a store), instead of always showing the
+ * cursor.  The various "main-xxx.c" files should avoid saving the game
+ * in response to a "menu item" request unless "inkey_flag" is TRUE, to
+ * prevent savefile
+ * corruption.
+ * If we are waiting for a keypress, and no keypress is ready, then we will
+ * refresh (once) the window which was active when this function was
+ * called.
+ * Note that "back-quote" is automatically converted into "escape" for
+ * convenience on machines with no "escape" key.  This is done after the
+ * macro matching, so the user can still make a macro for
+ * "backquote".
+ * Note the special handling of "ascii 30" (ctrl-caret, aka ctrl-shift-six)
+ * and "ascii 31" (ctrl-underscore, aka ctrl-shift-minus), which are used to
+ * provide support for simple keyboard "macros".  These keys are so strange
+ * that their loss as normal keys will probably be noticed by nobody.  The
+ * "ascii 30" key is used to indicate the "end" of a macro action, which
+ * allows recursive macros to be avoided.  The "ascii 31" key is used by
+ * some of the "main-xxx.c" files to introduce macro trigger
+ * sequences.
+ * Hack -- we use "ascii 29" (ctrl-right-bracket) as a special "magic" key,
+ * which can be used to give a variety of "sub-commands" which can be used
+ * any time.  These sub-commands could include commands to take a picture of
+ * the current screen, to start/stop recording a macro action,
+ * etc.
+ * If "angband_term[0]" is not active, we will make it active during this
+ * function, so that the various "main-xxx.c" files can assume that input
+ * is only requested (via "Term_inkey()") when "angband_term[0]" is
+ * active.
+ * Mega-Hack -- This function is used as the entry point for clearing the
+ * "signal_count" variable, and of the "character_saved"
+ * variable.
+ * Hack -- Note the use of "inkey_next" to allow "keymaps" to be
+ * processed.
+ * Mega-Hack -- Note the use of "inkey_hack" to allow the "Borg" to steal
+ * control of the keyboard from the user.
+ * @note (see file util.c)
+ */
+extern s32b inkey(void);
+
+/** @fn outkey(s32b k)
+ * @param k Number
+ * @return Number
+ * @note
+ */
+extern errr Term_keypress@outkey(s32b k);
+
+/** @fn depth(void)
+ * @return Number
+ * @note
+ */
+extern s32b screen_depth@depth(void);
+
+/** @fn save(void)
+ * @return void
+ * @note
+ */
+extern void screen_save@save(void);
+
+/** @fn load(void)
+ * @return void
+ * @note
+ */
+extern void screen_load@load(void);
+
+/** @fn save_to(void)
+ * @return term_win
+ * @note
+ */
+extern term_win* Term_save_to@save_to(void);
+
+/** @fn load_from(term_win *save, bool final)
+ * @param *save term_win
+ * @param final Boolean
+ * @return Number
+ * @note
+ */
+extern errr Term_load_from@load_from(term_win *save, bool final);
+
+/** @fn c_put_str(byte attr, cptr str, s32b row, s32b col)
+ * @brief Add string "str" with attributes "attr" to screen at row "row"
+ * and column "col".
+ * @param attr Number \n the attribute of the string
+ * @brief Attribute
+ * @param str String \n the string
+ * @brief String
+ * @param row Number \n the target row on the screen.
+ * @brief Row
+ * @param col Number \n the target column on the screen.
+ * @brief Column
+ * @return void
+ * @note
+ * Display a string on the screen using an attribute.
+ * At the given location, using the given attribute, if allowed,
+ * add the given string.  Do not clear the line.
+ * @note (see file util.c)
+ */
+extern void c_put_str(byte attr, cptr str, s32b row, s32b col);
+
+/** @fn put_str(cptr str, s32b row, s32b col)
+ * @param str String
+ * @param row Number
+ * @param col Number
+ * @return void
+ * @note
+ */
+extern void put_str(cptr str, s32b row, s32b col);
+
+/** @fn c_prt(byte attr, cptr str, s32b row, s32b col)
+ * @brief Add string "str" with attributes "attr" to screen at row "row"
+ * and column "col", clearing to the end of the row.
+ * @param attr Number \n the attribute of the string
+ * @brief Attribute
+ * @param str String \n the string
+ * @brief String
+ * @param row Number \n the target row on the screen.
+ * @brief Row
+ * @param col Number \n the target column on the screen.
+ * @brief Column
+ * @return void
+ * @note (see file util.c)
+ */
+extern void c_prt(byte attr, cptr str, s32b row, s32b col);
+
+/** @fn prt(cptr str, s32b row, s32b col)
+ * @brief Add white string "str" to screen at row "row" and column "col",
+ * clearing to the end of the row.
+ * @param str String \n the string
+ * @brief String
+ * @param row Number \n the target row on the screen.
+ * @brief Row
+ * @param col Number \n the target column on the screen.
+ * @brief Column
+ * @return void
+ * @note (see file util.c)
+ */
+extern void prt(cptr str, s32b row, s32b col);
+
+/** @fn clear_from(s32b row)
+ * @brief Clear part of the screen.
+ * @param row Number \n the target row on the screen.
+ * @brief Row
+ * @return void
+ * @note
+ * Clear all rows from the starting row to the end of the screen.
+ * @note (see file util.c)
+ */
+extern void clear_from(s32b row);
+
+/** @fn text_out_c(byte a, cptr str)
+ * @param a Number
+ * @param str String
+ * @return void
+ * @note
+ */
+extern void text_out_c(byte a, cptr str);
+
+/** @fn screen_color(byte color)
+ * @param Color to change to
+ */
+extern void darken_screen@screen_color(byte color);
+
+/** @fn apply_keymap(s32b ch)
+ * @param a Character
+ * @return String
+ */
+extern cptr lua_apply_keymap@apply_keymap(s32b ch);
+}
+/** @} */
+
+
+/** @fn get_check(cptr prompt, bool keep_cursor)
+ * @brief Verify something with the user.
+ * @param prompt String \n the prompt, which should take the form "Query? "
+ * @brief Prompt
+ * @param keep_cursor Boolean \n keep cursor in current position
+ * @brief Keep cursor in current position.
+ * @return Boolean \n TRUE if  "y" or "Y" is entered, otherwise FALSE.
+ * @note
+ * Note that "[y/n]" is appended to the prompt.
+ * @note (see file util.c)
+ */
+extern bool get_check_aux @ get_check(cptr prompt, bool keep_cursor = FALSE);
+
+/** @fn  get_com(cptr prompt, s32b *com = 0, bool keep_cursor = FALSE);
+ * @brief Prompts for a keypress.
+ * @param prompt String \n the prompt, which should take the form "Command: "
+ * @brief Prompt
+ * @param *com Number
+ * @param keep_cursor Boolean \n Keep cursor in current position.
+ * @brief Keep cursor in current position.
+ * @brief Command
+ * @return Boolean \n FALSE if "Escape" was pressed, otherwise TRUE.
+ * @return *com \n The entered command.
+ * @note (see file util.c)
+ */
+extern bool get_com_lua @ get_com(cptr prompt, s32b *com = 0,
+                                  bool beel_cursor = FALSE);
+
+/** @fn get_quantity(cptr prompt, s32b max)
+ * @brief Request a "quantity" from the user.
+ * @param prompt String \n the prompt
+ * @brief Prompt
+ * @param max Number \n the maximum quantity
+ * @brief Maximum quantity
+ * @return Number \n the returned quantity.
+ * @note
+ * Hack -- allow "command_arg" to specify a quantity
+ * The quantity is in the range 0 to "max" inclusive. The default is 1. A
+ * letter means the maximum.
+ * @note (see file util.c)
+ */
+extern s32b get_quantity(cptr prompt, s32b max);
+
+/** @fn test_monster_name(cptr name)
+ * @brief Given monster name as string, return the index in r_info array.
+ * @param name String \n the monster name.
+ * @brief Monster name
+ * @return Number \n The index of the monster in r_info[], or 0 if the name
+ * does not match a monster.
+ * @note
+ * Name must exactly match (look out for commas and the like!), or else 0 is
+ * returned. Case doesn't matter.
+ * @note (see file util.c)
+ */
+extern s32b test_monster_name(cptr name);
+
+/** @fn test_item_name(cptr name)
+ * @brief Given item name as string, return the index in k_info array.
+ * @param name String \n the item name.
+ * @brief Item name
+ * @return Number \n The index of the item in k_info[], or 0 if the name
+ * does not match an item.
+ * @note
+ * Name must exactly match (look out for commas and the like!), or else 0 is
+ * returned. Case doesn't matter.
+ * @note (see file util.c)
+ */
+extern s32b test_item_name(cptr name);
+
+/** @fn luck(s32b min, s32b max)
+ * @brief Return a luck number between a certain range.
+ * @param min Number \n the minimum luck value returned.
+ * @brief Mimimum
+ * @param max Number \n the maximum luck value returned.
+ * @brief Maximum
+ * @return Number \n The scaled value of player's luck.
+ * @note
+ * Player lucked is cap at a minimum of -30 and maximum of +30 before it is
+ * scaled to the range defined by "min" and "max".
+ * @note (see file xtra1.c)
+ */
+extern s32b luck(s32b min, s32b max);
+
+/** @fn value_scale(s32b value, s32b vmax, s32b max, s32b min)
+ * @param value Number
+ * @param vmax Number
+ * @param max Number
+ * @param min Number
+ * @return Number
+ * @note
+ */
+extern s32b value_scale(s32b value, s32b vmax, s32b max, s32b min);
+
+/** @fn quit(cptr str)
+ * @brief Quit the game.
+ * @param str String \n an error code or a message which is logged.
+ * @brief String
+ * @return void
+ * @note
+ * Exit (ala "exit()").  If 'str' is NULL, do "exit(0)".
+ * If 'str' begins with "+" or "-", do "exit(atoi(str))".
+ * Otherwise, plog() 'str' and exit with an error code of -1.
+ * But always use 'quit_aux', if set, before anything else.
+ * @note (see file z-util.c)
+ */
+extern void quit(cptr str);
+
+/** @fn tome_dofile(char *file)
+ * @brief Load a Lua file from lib/scpts.
+ * @param *file String \n the name of a Lua file to load.
+ * @brief Filename
+ * @return Boolean \n TRUE if file was loaded, otherwise FALSE.
+ * @note (see file script.c)
+ */
+extern bool tome_dofile(char *file, bool bypass_redirection = FALSE);
+
+/** @fn tome_dofile_anywhere(cptr dir, char *file, bool test_exist = TRUE)
+ * @brief Load a Lua file from any directory.
+ * @param dir String \n the name of a Lua file directory
+ * @brief Directory
+ * @param *file String \n the name of a Lua file to load.
+ * @brief Filename
+ * @param test_exist Boolean \n TRUE if a message is printed if the file does
+ * not exist, otherwise FALSE.
+ * @brief Message if file does not exist?
+ * @return Boolean \n TRUE if file was loaded, otherwise FALSE.
+ * @note (see file script.c)
+ */
+extern bool tome_dofile_anywhere(cptr dir, char *file, bool test_exist = TRUE, bool bypass_redirection = FALSE);
+
+/** @fn dump_lua_stack(s32b min, s32b max)
+ * @brief Display part of the Lua stack.
+ * @param min Number \n the starting item of the stack dump.
+ * @brief Start item
+ * @param max Number \n the ending item of the stack dump.
+ * @brief End item
+ * @return void
+ * @note (see file script.c)
+ */
+extern void dump_lua_stack(s32b min, s32b max);
+
+/* Savefile stuff */
+/** @fn register_savefile(s32b num)
+ * @brief Add "num" slots to the savefile.
+ * @param num Number \n the number of slots to add.
+ * @brief Slots
+ * @return void
+ * @note (see file loadsave.c)
+ */
+extern void register_savefile(s32b num);
+
+/** @fn save_nil_key(char *key)
+ * @param *key String
+ * @return void
+ * @note
+ */
+extern void save_nil_key(char *key);
+
+/** @fn save_number_key(char *key, s32b val)
+ * @brief Save a key-value combination in the save file.
+ * @param *key String \n the key to save.
+ * @brief Key
+ * @param val Number \n the value of the key.
+ * @brief Value
+ * @return void
+ * @note
+ * The length of the key is stored first, then the key, then the value.
+ * @note (see file loadsave.c)
+ */
+extern void save_number_key(char *key, s32b val);
+
+/** @fn save_string_key(char *key, cptr val)
+ * @param *key String
+ * @param val String
+ * @return void
+ * @note
+ */
+extern void save_string_key(char *key, cptr val);
+
+/*** @struct cave_type
+ * @brief Cave stuff
+ * @{ */
+struct cave_type
+{
+	/** @var info
+	 * @brief Number
+	 * @note Hack -- cave flags
+	 */
+	u16b info;
+
+	/** @var feat
+	 * @brief Number
+	 * @note Hack -- feature type
+	 */
+	byte feat;
+
+	/** @var inventory
+	 * @brief flags_type
+	 * @note Object in this grid
+	 */
+	flags_type inventory;
+
+	/** @var m_idx
+	 * @brief Number
+	 * @note Monster in this grid
+	 */
+	s16b m_idx;
+
+	/** @var flags
+	 * @brief flags_type
+	 */
+	flags_type flags;
+
+	/** @var mana
+	 * @brief Number
+	 * @note Magical energy of the grid
+	 */
+	s16b mana;
+
+	/** @var mimic
+	 * @brief Number
+	 * @note Feature to mimic
+	 */
+	byte mimic;
+
+	/** @var effect
+	 * @brief Number
+	 * @note The lasting effects
+	 */
+	s16b effect;
+
+	/** @var activations
+	 * @brief flags_type
+	 * @note The various effects that can happen. This is a flagset of flagsets
+	 */
+	flags_type activations;
+};
+/** @} */
+
+
+/** @var ANGBAND_SYS
+ * @brief String
+ * @note
+ * Hack -- The special Angband "System Suffix"
+ * This variable is used to choose an appropriate "pref-xxx" file
+ */
+extern cptr ANGBAND_SYS;
+
+/** @var ANGBAND_KEYBOARD
+ * @brief String
+ * @note
+ * Hack -- The special Angband "Keyboard Suffix"
+ * This variable is used to choose an appropriate macro-trigger definition
+ */
+extern cptr ANGBAND_KEYBOARD;
+
+/** @var TOME_GRAPHICS
+ * @brief String
+ * @note
+ * Hack -- The special ToME "Graphics Suffix"
+ * This variable is used to choose an appropriate "graf-xxx" file
+ */
+extern cptr TOME_GRAPHICS;
+
+/** @var TENGINE_DIR
+ * @brief String
+ * @note
+ * Path name: The main "game" directory
+ * This variable is not actually used anywhere in the code
+ */
+extern cptr TENGINE_DIR;
+
+/** @var TENGINE_DIR_SCORES
+ * @brief String
+ * @note
+ * High score files
+ * These are portable between platforms
+ */
+extern cptr TENGINE_DIR_SCORES;
+
+/** @var TENGINE_DIR_BONE
+ * @brief String
+ * @note
+ * Bone files for player ghosts (ascii)
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_BONE;
+
+/** @var TENGINE_DIR_CMOV
+ * @brief String
+ * @note
+ * Cmovie files of entire games (ascii)
+ * Apart from possible newline things, likely portable btw platforms
+ */
+extern cptr TENGINE_DIR_CMOV;
+
+/** @var TENGINE_DIR_DATA
+ * @brief String
+ * @note
+ * Textual template files for the "*_info" arrays (ascii)
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_DATA;
+
+/** @var TENGINE_DIR_DNGN
+ * @brief String
+ * @note
+ * Textual dungeon level definition files
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_DNGN;
+
+/** @var TENGINE_DIR_ENGINE
+ * @brief String
+ * @note
+ * Core lua system
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_ENGINE;
+
+/** @var TENGINE_DIR_FILE
+ * @brief String
+ * @note
+ * Various extra files (ascii)
+ * These files may be portable between platforms
+ */
+extern cptr TENGINE_DIR_FILE;
+
+/** @var TENGINE_DIR_FONT
+ * @brief String
+ * @note
+ * Various extra font files (binary)
+ * These files may be portable between platforms
+ */
+extern cptr TENGINE_DIR_FONT;
+
+/** @var TENGINE_DIR_GRAF
+ * @brief String
+ * @note
+ * Various extra graphics files (binary)
+ * These files may be portable between platforms
+ */
+extern cptr TENGINE_DIR_GRAF;
+
+/** @var TENGINE_DIR_HELP
+ * @brief String
+ * @note
+ * Help files (normal) for the online help (ascii)
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_HELP;
+
+/** @var TENGINE_DIR_INFO
+ * @brief String
+ * @note
+ * Help files (spoilers) for the online help (ascii)
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_INFO;
+
+/** @var TENGINE_DIR_MODULES
+ * @brief String
+ * @note
+ * Modules, those subdirectories are half-mirrors of lib/
+ */
+extern cptr TENGINE_DIR_MODULES;
+
+/** @var TENGINE_DIR_NOTE
+ * @brief String
+ * @note
+ * Textual template files for the plot files (ascii)
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_NOTE;
+
+/** @var TENGINE_DIR_PATCH
+ * @brief String
+ * @note
+ * Patches, contains one subdir per patch with a patch.lua file
+ * in it and a patch_init() function in it
+ */
+extern cptr TENGINE_DIR_PATCH;
+
+/** @var TENGINE_DIR_PREF
+ * @brief String
+ * @note
+ * Default "preference" files (ascii)
+ * These files are rarely portable between platforms
+ */
+extern cptr TENGINE_DIR_PREF;
+
+/** @var TENGINE_DIR_RAW
+ * @brief String
+ * @note
+ * Binary image files for the "*_info" arrays (binary)
+ * These files are not portable between platforms
+ */
+extern cptr TENGINE_DIR_RAW;
+
+/** @var TENGINE_DIR_SAVE
+ * @brief String
+ * @note
+ * Savefiles for current characters (binary)
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_SAVE;
+
+/** @var TENGINE_DIR_SCPT
+ * @brief String
+ * @note
+ * Scripts.
+ * These files are portable between platforms
+ */
+extern cptr TENGINE_DIR_SCPT;
+
+/** @var TENGINE_DIR_USER
+ * @brief String
+ * @note
+ * User "preference" files (ascii)
+ * These files are rarely portable between platforms
+ */
+extern cptr TENGINE_DIR_USER;
+
+/** @var TENGINE_DIR_XTRA
+ * @brief String
+ * @note
+ * Various extra files (binary)
+ * These files are rarely portable between platforms
+ */
+extern cptr TENGINE_DIR_XTRA;
+
+
+/** @fn distance(s32b y1, s32b x1, s32b y2, s32b x2)
+ * @param y1 Number \n y-coordinate of the origin.
+ * @brief Origin y-coordinate
+ * @param x1 Number \n x-coordinate of the origin.
+ * @brief Origin x-coordinate
+ * @param y2 Number \n y-coordinate of the target.
+ * @brief Target y-coordinate
+ * @param x2 Number \n x-coordinate of the target.
+ * @brief Target x-coordinate
+ * @return Number
+ */
+extern s32b distance(s32b y1, s32b x1, s32b y2, s32b x2);
+
+/** @fn los(s32b y1, s32b x1, s32b y2, s32b x2)
+ * @brief Determine if a line of sight can be traced from (x1,y1) to (x2,y2).
+ * @param y1 Number \n y-coordinate of the origin.
+ * @brief Origin y-coordinate
+ * @param x1 Number \n x-coordinate of the origin.
+ * @brief Origin x-coordinate
+ * @param y2 Number \n y-coordinate of the target.
+ * @brief Target y-coordinate
+ * @param x2 Number \n x-coordinate of the target.
+ * @brief Target x-coordinate
+ * @return Boolean \n TRUE if origin has line of sight to target, otherwise
+ * FALSE.
+ * @note
+ * A simple, fast, integer-based line-of-sight algorithm.  By Joseph Hall,
+ * 4116 Brewster Drive, Raleigh NC 27606.  Email to jnh@ecemwl.ncsu.edu.
+ * Returns TRUE if a line of sight can be traced from (x1,y1) to (x2,y2).
+ * The LOS begins at the center of the tile (x1,y1) and ends at the center of
+ * the tile (x2,y2).  If los() is to return TRUE, all of the tiles this line
+ * passes through must be floor tiles, except for (x1,y1) and (x2,y2).
+ * We assume that the "mathematical corner" of a non-floor tile does not
+ * block line of sight.
+ * Because this function uses (short) ints for all calculations, overflow may
+ * occur if dx and dy exceed 90.
+ * Once all the degenerate cases are eliminated, the values "qx", "qy", and
+ * "m" are multiplied by a scale factor "f1 = abs(dx * dy * 2)", so that
+ * we can use integer arithmetic.
+ * We travel from start to finish along the longer axis, starting at the border
+ * between the first and second tiles, where the y offset = .5 * slope, taking
+ * into account the scale factor.  See below.
+ * Also note that this function and the "move towards target" code do NOT
+ * share the same properties.  Thus, you can see someone, target them, and
+ * then fire a bolt at them, but the bolt may hit a wall, not them.  However,
+ * by clever choice of target locations, you can sometimes throw a "curve".
+ * Note that "line of sight" is not "reflexive" in all cases.
+ * Use the "projectable()" routine to test "spell/missile line of sight".
+ * Use the "update_view()" function to determine player line-of-sight.
+ * @note (see file cave.c)
+ */
+extern bool los(s32b y1, s32b x1, s32b y2, s32b x2);
+
+/** @fn cave_feat_get(cave_type *c_ptr, s32b flag)
+ * @param *c_ptr cave_type \n the cave.
+ * @brief Cave
+ * @param flag Number \n the required feature flag.
+ * @brief Feature
+ * @return Number
+ */
+extern s16b cave_feat_get(cave_type *c_ptr, s32b flag);
+
+/** @fn cave_feat_is(cave_type *c_ptr, s32b flag)
+ * @brief Determine if cave "c_ptr" has feature "flag".
+ * @param *c_ptr cave_type \n the cave.
+ * @brief Cave
+ * @param flag Number \n the required feature flag.
+ * @brief Feature
+ * @return Boolean \n TRUE if the cave features include "flag", otherwise
+ * FALSE.
+ * @note (see file w_util.c)
+ */
+extern bool cave_feat_is(cave_type *c_ptr, s32b flag);
+
+/** @fn cave_mimic_get(cave_type *c_ptr, s32b flag)
+ * @param *c_ptr cave_type \n the cave.
+ * @brief Cave
+ * @param flag Number \n the required feature flag.
+ * @brief Feature
+ * @return Number
+ */
+extern s16b cave_feat_get(cave_type *c_ptr, s32b flag);
+
+/** @fn cave_mimic_is(cave_type *c_ptr, s32b flag)
+ * @brief Determine if the appearance of cave "c_ptr" has feature "flag".
+ * @param *c_ptr cave_type \n the cave.
+ * @brief Cave
+ * @param flag Number \n the required feature flag.
+ * @brief Feature
+ * @return Boolean \n TRUE if the cave features include "flag", otherwise
+ * FALSE.
+ * @note (see file w_util.c)
+ */
+extern bool cave_mimic_is(cave_type *c_ptr, s32b flag);
+
+/** @fn cave(s32b y, s32b x);
+ * @brief Return the type of cave at grid coordinate (x,y).
+ * @param y Number \n y-coordinate of grid.
+ * @brief Y-coordinate
+ * @param x Number \n x-coordinate of grid.
+ * @brief X-coordinate
+ * @return cave_type \n The type of cave at grid coordinate (x,y).
+ * @note (see file lua_bind.c)
+ */
+extern cave_type *lua_get_cave @ cave(s32b y, s32b x);
+
+/** @fn set_target(s32b y, s32b x)
+ * @brief Set grid coordinate (x,y) as the target grid.
+ * @param y Number \n y-coordinate of grid.
+ * @brief Y-coordinate
+ * @param x Number \n x-coordinate of grid.
+ * @brief X-coordinate
+ * @return void
+ * @note (see file lua_bind.c)
+ */
+extern void set_target(s32b y, s32b x);
+
+/** @fn get_target(s32b dir, s32b *y = 0, s32b *x = 0)
+ * @brief Get a target based on direction "dir" from the player.
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param *y Number
+ * @brief Target y-coordinate
+ * @param *x Number
+ * @brief Target x-coordinate
+ * @return void
+ * @return *y Number \n The y-coordinate of the target.
+ * @return *x Number \n The x-coordinate of the target.
+ * @note
+ * The target is actually 100 grids away in direction "dir". If "dir" is 5,
+ * the actual target, if one is set, is returned.
+ * @note (see file lua_bind.c)
+ */
+extern void get_target(s32b dir, s32b *y = 0, s32b *x = 0);
+
+/** @var m_allow_special[max_r_idx]
+ * @brief Boolean
+ * @note "Special gene" flags for monsters
+ */
+extern bool m_allow_special[max_r_idx];
+
+/** @var k_allow_special[max_k_idx]
+ * @brief Boolean
+ * @note "Special gene" flags for objects
+ */
+extern bool k_allow_special[max_k_idx];
+
+/** @var a_allow_special[max_a_idx]
+ * @brief Boolean
+ * @note "Special gene" flags for artifacts
+ */
+extern bool a_allow_special[max_a_idx];
+
+/** @fn cave_set_feat(s32b y, s32b x, s32b feat)
+ * @brief Change the "feat" flag for a grid, and notice/redraw the grid
+ * @param y Number \n y-coordinate of grid.
+ * @brief Y-coordinate
+ * @param x Number \n x-coordinate of grid.
+ * @brief X-coordinate
+ * @param feat Number \n new set of feature flags.
+ * @brief Features
+ * @return void
+ * @note (see file cave.c)
+ */
+extern void cave_set_feat(s32b y, s32b x, s32b feat);
+
+/** @fn show_file(cptr name, cptr what, s32b line, s32b mode)
+ * @brief Show a help file.
+ * @param name String \n name of the help file.
+ * @brief Filename
+ * @param what String \n hyperlink caption.
+ * @brief Caption
+ * @param line Number \n the line number from where to start the display of
+ * the file.
+ * @brief Starting line
+ * @param mode Number \n *unused*
+ * @brief *Unused*
+ * @return Boolean \n TRUE if file was shown successfully, otherwise FALSE.
+ * @note
+ * If the file is not found, the function will search the help, info, and file
+ * directories for the file. If it is still not found, a message is displayed
+ * and the function returns FALSE.
+ * The file is parsed once to extract colour, tag, and hyperlink
+ * information.
+ * The file is parse again to show it on the screen.
+ * @note (see file files.c)
+ */
+extern bool show_file(cptr name, cptr what, s32b line, s32b mode);
+
+/** @var target_who
+ * @brief Number
+ * @note
+ * If this is -1, the target is the player.
+ * If this is 0, there is no target.
+ * If this is >0, the target is the monster m_idx[target_who].
+ */
+extern s16b target_who;
+
+/** @var target_col
+ * @brief Number
+ * @note The column of the target grid
+ */
+extern s16b target_col;
+
+/** @var target_row
+ * @brief Number
+ * @note The row of the target grid
+ */
+extern s16b target_row;
+
+/** @var max_bact
+ * @brief Number
+ * @note Maximum building actions
+ */
+extern s32b max_bact;
+
+/** @var ddd[9]
+ * @brief Number
+ * @note Global array for looping through the "keypad directions"
+ */
+extern s16b ddd[9];
+
+/** @var ddx[10]
+ * @brief Number
+ * @note Global array for converting "keypad direction" into x offsets
+ */
+extern s16b ddx[10];
+
+/** @var ddy[10]
+ * @brief Number
+ * @note Global array for converting "keypad direction" into y offsets
+ */
+extern s16b ddy[10];
+
+/** @var ddx_ddd[9]
+ * @brief Number
+ * @note Global array for optimizing "ddx[ddd[i]]"
+ */
+extern s16b ddx_ddd[9];
+
+/** @var ddy_ddd[9]
+ * @brief Number
+ * @note Global array for optimizing "ddy[ddd[i]]"
+ */
+extern s16b ddy_ddd[9];
+/* extern s16b dddir[3][3]; */
+
+
+/* Gen stuff */
+/** @fn alloc_room(s32b by0, s32b bx0, s32b ysize, s32b xsize, s32b *y1 = 0, s32b *x1 = 0, s32b *y2 = 0, s32b *x2 = 0)
+ * @brief Allocate the space needed by a room in the room_map array.
+ * @param by0 Number \n the y-coordinate of the block to contain the room.
+ * @brief Block y-coordinate
+ * @param bx0 Number \n the x-coordinate of the block to contain the room.
+ * @brief Block x-coordinate
+ * @param ysize Number \n the vertical size (height) of the room.
+ * @brief Room height
+ * @param xsize Number \n the horizontal size (width) of the room.
+ * @brief Room width
+ * @param *y1 Number
+ * @brief Top-right y-coordinate
+ * @param *x1 Number
+ * @brief Top-right x-coordinate
+ * @param *y2 Number
+ * @brief Bottom-left y-coordinate
+ * @param *x2 Number
+ * @brief Bottom-right x-coordinate
+ * @return Boolean \n TRUE if the room was allocated successfully, otherwise
+ * FALSE.
+ * @return *y1 Number \n The y-coordinate of the top left corner.
+ * @return *x1 Number \n The x-coordinate of the top left corner.
+ * @return *y2 Number \n The y-coordinate of the bottom right corner.
+ * @return *x2 Number \n The x-coordinate of the bottom right corner.
+ * @note
+ * Dungeon generation is not something to be messed around with unless you
+ * really, really, really know what you are doing (or you are DarkGod).
+ * @note (see file lua_bind.c, generate.c)
+ */
+extern bool alloc_room(s32b by0, s32b bx0, s32b ysize, s32b xsize, s32b *y1 = 0, s32b *x1 = 0, s32b *y2 = 0, s32b *x2 = 0);
+
+
+/* Misc stuff */
+/** @fn is_quest(s32b level)
+ * @param level Number
+ * @return Number
+ * @note
+ */
+extern s32b is_quest(s32b level);
+
+/** @fn draw_box(s32b y, s32b x, s32b h, s32b w)
+ * @param y Number
+ * @param x Number
+ * @param h Number
+ * @param w Number
+ * @return void
+ * @note
+ */
+extern void draw_box(s32b y, s32b x, s32b h, s32b w);
+
+/** @fn input_box(cptr title, s32b max)
+ * @brief Create an input box and ask the user a question.
+ * @param title String \n the title of the box, which should take the form of
+ * a question. For example, "New name?".
+ * @brief Title
+ * @param max Number \n the maximum length of the response.
+ * @brief Maximum response length
+ * @return String \n The answer to the question.
+ * @note
+ * The input box is placed in the middle of the screen. The default reponse is
+ * blank, and can be up to 79 characters long.
+ * @note (see file lua_bind.c, util.c)
+ */
+extern char *lua_input_box@input_box(cptr title, s32b max, cptr def="");
+
+/** @fn msg_box(cptr title)
+ * @brief Create a msg box and ask a question.
+ * @param title String \n the question.
+ * @brief Question
+ * @return s32b \n The answer.
+ * @note
+ * The message box is placed in the middle of the screen. The answer is a
+ * single character / key press.
+ * @note (see file lua_bind.c, util.c)
+ */
+extern s32b lua_msg_box@msg_box(cptr title);
+
+/** @fn rescale(s32b x, s32b max, s32b new_max)
+ * @brief Rescale value "x".
+ * @param x Number \n the original value.
+ * @brief Value
+ * @param max Number \n the original maximum that value could have.
+ * @brief Original maximum
+ * @param new_max Number \n the new maximum that value can have.
+ * @brief New maximum
+ * @return Number \n The rescaled value of "x".
+ * @note
+ * There is no error checking here. Please don't set "max" to zero.
+ * @note (see file util.c)
+ */
+extern s32b rescale(s32b x, s32b max, s32b new_max);
+
+$static const char *player_name_lua(cptr new_name){ if (new_name) { strcpy(player_name, new_name); process_player_name(FALSE); } return (const char *)player_name; }
+/** @fn player_name()
+ * @brief Return the player's name.
+ * @return String \n The player's name.
+ * @note (see file w_util.c)
+ */
+static const char *player_name_lua@player_name(cptr new_name=NULL);
+
+
+/* Temp files */
+/** @fn make_temp_file();
+ * @brief Create a temporary file.
+ * @return Boolean \n True if file creation succeeded, false otherwise.
+ * @note
+ * If a temp file already exists, or one can't be generated, the function
+ * will fail. Otherwise a file is created.
+ * @note (see file lua_bind.c, util.c)
+ */
+extern bool lua_make_temp_file@make_temp_file();
+
+/** @fn make_temp_file();
+ * @brief Writes to a temporary file
+ * @param str String \n output string
+ * @brief String to write to the file.
+ * @return Error \n Error status of attempt to write.
+ * @note (see file lua_bind.c, util.c)
+ */
+extern errr lua_write_temp_file@write_temp_file(cptr str);
+
+/** @fn close_temp_file();
+ * @brief Close a temporary file.
+ * @return void
+ * @note
+ * The file is closed but not released.
+ * @note (see file lua_bind.c, util.c)
+ */
+extern void lua_close_temp_file@close_temp_file();
+
+/** @fn end_temp_file();
+ * @brief End a temporary file.
+ * @return void
+ * @note
+ * The file is released and the temp_file flag is set to FALSE.
+ * @note (see file lua_bind.c, util.c)
+ */
+extern void lua_end_temp_file@end_temp_file();
+
+/** @fn get_temp_name();
+ * @brief Return the name of the temporary file.
+ * @return String \n The name of the temporary file, or the null string
+ * if there is no temporary file.
+ * @note (see file lua_bind.c)
+ */
+extern cptr lua_get_temp_name@get_temp_name();
+
+
+/* Quarks */
+/** @fn quark_str(s16b num)
+ * @brief Return a quark (inscription) from the quark array.
+ * @param num Number \n the index to the quark string array. If this is less
+ * than zero or more than the maximum number of quarks, it is treated as zero.
+ * @brief Quark index
+ * @return String \n The quark.
+ * @note
+ * We use a global array for all inscriptions to reduce the memory
+ * spent maintaining inscriptions.  Of course, it is still possible
+ * to run out of inscription memory, especially if too many different
+ * inscriptions are used, but hopefully this will be rare.
+ * We use dynamic string allocation because otherwise it is necessary
+ * to pre-guess the amount of quark activity.  We limit the total
+ * number of quarks, but this is much easier to "expand" as needed.
+ * Any two items with the same inscription will have the same "quark"
+ * index, which should greatly reduce the need for inscription space.
+ * Note that "quark zero" is NULL and should not be "dereferenced".
+ * @note (see file util.c)
+ */
+extern cptr quark_str(s16b num);
+
+/** @fn quark_add(cptr str)
+ * @brief Add a quark (inscription) to the quark array.
+ * @param str String \n the quark to add to the array.
+ * @brief Quark
+ * @return Number \n The index to the quark array for this quark
+ * @note
+ * The array is searched to see if the quark already exists. If so, the index
+ * to the existing quark is returned.
+ * If there is no room, 0 (NULL reference) is returned.
+ * @note (see file util.c)
+ */
+extern s16b quark_add(cptr str);
+
+
+/* Modules */
+/** @var game_module
+ * @brief String
+ * @note The name of the current game module
+ */
+extern cptr game_module;
+
+
+/* Input */
+/** @fn get_keymap_dir(char ch)
+ * @brief Get a direction from the keyboard according to the keymap.
+ * @param ch String \n the character representing a direction.
+ * @brief Direction
+ * @return Number \n The direction represented by "ch". It will be in the
+ * range 0 to 9.
+ * @note
+ * If "ch" is a number, the number is used. Otherwise the direction is
+ * chosen from the Original or Rogue keymaps.
+ * If the direction is 5, it is set to 0.
+ * @note (see file util.c)
+ */
+extern s32b get_keymap_dir(char ch);
+
+
+/*
+ * Timers
+ */
+
+/** @struct timer_type
+ * @{ */
+struct timer_type
+{
+	/** @var *next
+	 * @brief timer_type
+	 * @note The next timer in the list
+	 */
+	timer_type *next;
+
+	/** @var enabled
+	 * @brief Boolean
+	 * @note Is it currently counting?
+	 */
+	bool enabled;
+
+	/** @var delay
+	 * @brief Number
+	 * @note Delay between activations
+	 */
+	s32b delay;
+	/** @var countdown
+	 * @brief Number
+	 * @note The current number of turns passed, when it reaches delay it fires
+	 */
+	s32b countdown;
+
+	/** @var callback
+	 * @brief String
+	 * @note The lua function to call upon firing(no C callback yet .. maybe)
+	 */
+	cptr callback;
+};
+/** @} */
+
+
+/*
+ * Lists
+ */
+
+/** @struct list_type
+ * @{ */
+struct list_type
+{
+};
+/** @} */
+
+/** @fn create_list(s32b size);
+ * @dgonly
+ * @brief Create an empty list big enough to store "size" strings.
+ * @param size Number \n the number of strings the list will hold.
+ * @brief List size
+ * @return list_type \n The empty list.
+ * @note (see file lua_bind.c)
+ */
+extern list_type *lua_create_list@create_list(s32b size);
+
+/** @fn delete_list(list_type *, s32b size);
+ * @dgonly
+ * @brief Delete the list of strings.
+ * @param * list_type \n the list of strings.
+ * @brief List
+ * @param size Number \n the number of strings the list holds.
+ * @brief List size
+ * @return void
+ * @note
+ * All the strings in the list are deleted first, then the list is deleted.
+ * @note (see file lua_bind.c)
+ */
+extern void lua_delete_list@delete_list(list_type *, s32b size);
+
+/** @fn add_to_list(list_type *, s32b idx, cptr str);
+ * @dgonly
+ * @brief Add string "str" to list in position "idx".
+ * @param * list_type \n the list of strings.
+ * @brief List
+ * @param idx Number \n the index of the list where the string will be added.
+ * @brief Index
+ * @param str String \n the string to be added.
+ * @brief String
+ * @return void
+ * @note
+ * Too bad if there was something in that position already.
+ * You have been warned.
+ * @note (see file lua_bind.c)
+ */
+extern void lua_add_to_list@add_to_list(list_type *, s32b idx, cptr str);
+
+/** @fn display_list(s32b y, s32b x, s32b h, s32b w, cptr title, list_type *list, s32b max, s32b begin, s32b sel, byte sel_color, bool show_scrollbar);
+ * @dgonly
+ * @brief Display a scrollable boxed list with a selected item.
+ * @param y Number \n the y-coordinate of the top-left corner of the box.
+ * @brief Top-left y-coordinate
+ * @param x Number \n the x-coordinate of the top-left corner of the box.
+ * @brief Top-left x-coordinate
+ * @param h Number \n the height of the box.
+ * @brief Height
+ * @param w Number \n the width of the box.
+ * @brief Width
+ * @param title String \n the title for the list box.
+ * @brief Title
+ * @param *list list_type \n the list of strings to be displayed.
+ * @brief List
+ * @param max Number \n the maximum number of strings to display.
+ * @brief Maximum displayed strings
+ * @param begin Number \n the index of the first string to display.
+ * @brief Start index
+ * @param sel Number \n the index of the selected string.
+ * @brief Selected index
+ * @param sel_color Number \n the colour of the selected string.
+ * @brief Selected colour
+ * @param sel_color Boolean \n display scrollbar
+ * @brief Whether or not to display a scrollbar (if needed).
+ * @return void
+ * @note
+ * The title of the list is displayed in TERM_L_BLUE and the unselected strings
+ * are displayed in TERM_WHITE.
+ * @note (see file util.c)
+ */
+extern void lua_display_list@display_list(s32b y, s32b x, s32b h, s32b w, cptr title, list_type *list, s32b max, s32b begin, s32b sel, byte sel_color, bool show_scrollbar = FALSE);
+
+/*
+ * Flags
+ */
+
+typedef struct flag_node
+{
+	u32b key;
+	byte flags;
+	struct flag_node *next;  /* for chaining */
+} flag_node;
+
+$static byte flag_node_get_ptr_type(flag_node *node) { return node->vals.ptr.type; }
+static byte flag_node_get_ptr_type(flag_node *node);
+
+/** @struct flags_type
+ * @{ */
+typedef struct flags_type
+{
+	/** @var node[32536]
+	 * @brief flag_node
+	 */
+	flag_node node[32536];
+
+	/** @var size
+	 * @brief Number
+	 */
+	s32b size;
+
+	/** @var *firstfree
+	 * @brief flags_node
+	 * @note this position is free; all positions after it are full
+	 */
+	flag_node *firstfree;
+} flags_type;
+/** @} */
+
+/** @struct flags_holder_type
+ * @brief This easy the use of lone flagsets
+ * @{ */
+typedef struct flags_holder_type
+{
+	/** @var flags
+	 * @brief flags_type
+	 */
+	flags_type flags;
+} flags_holder_type;
+/** @} */
+
+/** @struct flag_registry
+ * @{ */
+typedef struct flag_registry
+{
+	/** @var index
+	 * @brief Numbner
+	 */
+	u32b index;
+
+	/** @var name
+	 * @brief String
+	 */
+	cptr name;
+
+	/** @var *next
+	 * @brief flag_registry
+	 */
+	struct flag_registry *next;
+} flag_registry;
+/** @} */
+
+extern u32b register_flag(cptr name);
+extern flag_registry *find_flag(u32b index);
+extern flag_registry *find_flag_by_name(cptr name);
+extern cptr get_flag_name(u32b index);
+extern u32b get_flag_index(cptr name);
+extern void flag_set_full(flags_type *t, u32b key, byte flags, s32b value, s32b value2, flags_type *value_flags=0);
+extern void flag_set(flags_type *t, u32b key, s32b value);
+extern void flag_remove(flags_type *t, u32b key);
+extern void flag_remove_rand(flags_type *t);
+extern flag_node *flag_get_node(flags_type *t, u32b key);
+extern s32b flag_get(flags_type *t, u32b key);
+extern s32b flag_get2(flags_type *t, u32b key);
+extern flags_type *flag_get_flags(flags_type *t, u32b key);
+extern bool flag_exists(flags_type *t, u32b key);
+extern flags_type *flag_new(s32b size=2);
+extern void flag_init(flags_type *t, s32b size);
+extern void flag_free(flags_type *t, bool full);
+extern void flags_print(flags_type *t);
+extern void flag_remove_zap(flags_type *t, u32b key);
+extern void flag_remove_rand_zap(flags_type *t);
+extern u32b flag_first_free_key(flags_type *t, u32b min);
+extern u32b flag_max_key(flags_type *t);
+extern void flag_empty(flags_type *t);
+extern void flag_empty_zap(flags_type *t);
+extern flags_type *flag_dup(flags_type *src);
+extern bool flag_intersects(flags_type *f1, flags_type *f2);
+extern void flag_copy(flags_type *dest, flags_type *src);
+extern bool flag_contains(flags_type *f1, flags_type *f2);
+extern u32b flag_contains_nb(flags_type *f1, flags_type *f2);
+extern bool flag_equal(flags_type *dest, flags_type *src);
+extern s32b flag_used(flags_type *t);
+extern void flag_add(flags_type *dest, flags_type *src);
+extern void flag_add_new(flags_type *dest, flags_type *src);
+extern void flag_del(flags_type *dest, flags_type *src);
+extern void flag_add_value_from(flags_type *dest, flags_type *src, flags_type *from);
+extern void flag_add_increase(flags_type *dest, flags_type *src);
+extern void flag_add_higher(flags_type *dest, flags_type *src);
+extern u32b flag_get_rand(flags_type *t);
+extern void *flag_get_ptr(flags_type *t, u32b key, byte type);
+extern void flag_set_ptr(flags_type *t, u32b key, byte type, void *ptr);
+extern flags_type *flag_shallow_dup(flags_type *src);
+extern void flag_shallow_copy(flags_type *dest, flags_type *src);
+extern void flag_shallow_free(flags_type *t, bool full);
+extern void flag_learn(flags_type *t, u32b key, bool learn);
+extern bool flag_is_known(flags_type *t, u32b key);
+extern void flag_learn_all(flags_type *t);
+
+#define FLAG_FLAG_USED          0x01            /* Node is used */
+#define FLAG_FLAG_RAND          0x02            /* Node final value is a rand_range(val, val2) */
+#define FLAG_FLAG_MBONUS        0x04            /* Randomization uses mbonus */
+#define FLAG_FLAG_BOTH          0x08            /* Both val & val2 are used */
+#define FLAG_FLAG_RAND_MBONUS   0x10            /* Randomization uses mbonus(val2) + rand(val1) */
+#define FLAG_FLAG_FLAGS         0x20            /* Values are in a flagset */
+#define FLAG_FLAG_PTR           0x40            /* Values are in a pointer */
+#define FLAG_FLAG_KNOWN         0x80            /* Flag has been identified */
+
+#define FLAG_TYPE_OBJ           0        /* object_type */
+#define FLAG_TYPE_STRING        1        /* cptr */
+#define FLAG_TYPE_MONSTER_BLOW  2        /* monster_blow */
+#define FLAG_TYPE_MONSTER       3        /* monster_type */
+#define FLAG_TYPE_DATA_BUFFER   4        /* buffer_type */
+#define FLAG_TYPE_STORE         5        /* store_type */
+
+$static bool lua_cave_clean_bold(s32b y, s32b x) { return (cave_clean_bold(y, x)) ? TRUE : FALSE; }
+static bool lua_cave_clean_bold@cave_clean_bold(s32b y, s32b x);
+
+$static bool lua_cave_floor_bold(s32b y, s32b x) { return (cave_floor_bold(y, x)) ? TRUE : FALSE; }
+static bool lua_cave_floor_bold@cave_floor_bold(s32b y, s32b x);
+
+$static bool lua_player_has_los_bold(s32b y, s32b x) { return (player_has_los_bold(y, x)) ? TRUE : FALSE; }
+static bool lua_player_has_los_bold@player_has_los_bold(s32b y, s32b x);
+
+$static bool lua_panel_contains(s32b y, s32b x) { return panel_contains(y, x); }
+static bool lua_panel_contains@panel_contains(s32b y, s32b x);
+
+$static bool lua_cave_empty_bold(s32b y, s32b x) { return (cave_empty_bold(y, x)) ? TRUE : FALSE; }
+static bool lua_cave_empty_bold@cave_empty_bold(s32b y, s32b x);
+
+$static char *lua_get_rnd_line(char *file_name) { static char buf[400]; return (get_rnd_line(file_name, buf) == 0) ? buf : ""; }
+static char *lua_get_rnd_line@get_rnd_line(char *file_name);
+
+$static char *lua_get_line(char* fname, cptr fdir, s32b line) { static char buf[400]; return (get_line(fname, fdir, buf, line) != NULL) ? buf : ""; }
+static char *lua_get_line@get_line(char* fname, cptr fdir, s32b line);
+
+extern byte delay_factor;
+
+extern bool target_able(s32b m_idx);
+extern bool target_okay(void);
+extern bool target_set(s32b mode);
+
+extern void mmove2(s32b *y = 0, s32b *x = 0, s32b y1, s32b x1, s32b y2, s32b x2);
+
+extern void forget_los_tracks(void);
+
+extern void print_rel(char c, byte a, s32b y, s32b x);
+extern void note_spot(s32b y, s32b x);
+extern void lite_spot(s32b y, s32b x);
+
+extern s16b max_panel_rows;
+extern s16b max_panel_cols;
+extern s16b panel_row_min;
+extern s16b panel_row_max;
+extern s16b panel_col_min;
+extern s16b panel_col_max;
+extern s16b panel_col_prt;
+extern s16b panel_row_prt;
+
+extern s16b ROW_MAP;
+extern s16b COL_MAP;
+extern s16b ROW_MAP_HGT;
+extern s16b COL_MAP_WID;
+extern s16b message_row;
+extern s16b message_col;
+extern s16b message_col_max;
+
+$static char *lua_grab_string(string_line source, s32b offset) { return source + offset; }
+static char *lua_grab_string@grab_string(string_line source, s32b offset);
+
+extern void do_cmd_redraw(void);
+
+extern void panel_bounds(void);
+
+extern bool done_loading_data_files;
+
+$static bool lua_in_bounds(s32b y, s32b x) {return in_bounds(y,x);}
+static bool lua_in_bounds@in_bounds(s32b y, s32b x);
+
+$static bool lua_in_bounds2(s32b y, s32b x) {return in_bounds2(y,x);}
+static bool lua_in_bounds2@in_bounds2(s32b y, s32b x);
+
+module time
+{
+extern u32b DAY;                   /* Number of turns per day */
+extern u32b YEAR;             /* Number of turns per year */
+extern u32b HOUR;              /* Number of turns per hour */
+extern u32b MINUTE;             /* Number of turns per minute */
+extern u32b DAY_START;              /* Sunrise */
+
+extern s32b bst@__exec_module(s32b what, s32b t=turn);
+
+extern timer_type *new_timer@__new_timer(cptr callback, s32b delay);
+extern void del_timer(timer_type *t_ptr);
+}
+
+/* Extended commands */
+extern void cli_add(cptr active, cptr trigger, cptr descr);
+
+/* Activates automatizer screen */
+extern void do_cmd_automatizer(void);
+
+/* Invokes the automatizer */
+extern void squeltch_grid(void);
+extern void squeltch_inventory(void);
+
+/* Setting windows modes */
+extern void do_cmd_options_win(void);
+
+/* Pointer convertors, REVERSED FOR DarkGod's use! */
+$static cptr __wrap_ptr_to_string(void *ptr) { return (cptr)ptr; }
+$static object_type *__wrap_ptr_to_object(void *ptr) { return (object_type*)ptr; }
+$static monster_blow *__wrap_ptr_to_monster_blow(void *ptr) { return (monster_blow*)ptr; }
+$static monster_type *__wrap_ptr_to_monster_type(void *ptr) { return (monster_type*)ptr; }
+$static store_type *__wrap_ptr_to_store_type(void *ptr) { return (store_type*)ptr; }
+$static buffer_type *__wrap_ptr_to_buffer(void *ptr) { return (buffer_type*)ptr; }
+$static void* __wrap_ptr_dup_buffer_to_void(void *ptr) { return (void*)data_buffer_dup((buffer_type*)ptr); }
+$static void* __wrap_ptr_dup_string_to_void(cptr ptr) { return (void*)string_make(ptr); }
+module __wrap_ptr
+{
+	static cptr __wrap_ptr_to_string@to_string(void *ptr);
+	static object_type *__wrap_ptr_to_object@to_object(void *ptr);
+	static monster_blow *__wrap_ptr_to_monster_blow@to_monster_blow(void *ptr);
+	static monster_type *__wrap_ptr_to_monster_type@to_monster_type(void *ptr);
+	static store_type *__wrap_ptr_to_store_type@to_store_type(void *ptr);
+	static void *__wrap_ptr_dup_buffer_to_void@dup_buffer_to_void(void *ptr);
+	static buffer_type *__wrap_ptr_to_buffer@to_buffer(void *ptr);
+	static void* __wrap_ptr_dup_string_to_void@dup_string_to_void(cptr ptr);
+}
+
+/*
+ * Game Options
+ */
+module game_options
+{
+extern bool rogue_like_commands;
+extern bool quick_messages;
+extern bool other_query_flag;
+extern bool carry_query_flag;
+extern bool use_old_target;
+extern bool always_pickup;
+extern bool prompt_pickup_heavy;
+extern bool always_repeat;
+extern bool depth_in_feet;
+extern bool stack_force_notes;
+extern bool stack_force_costs;
+extern bool show_labels;
+extern bool show_weights;
+extern bool show_inven_graph;
+extern bool show_equip_graph;
+extern bool show_store_graph;
+extern bool show_choices;
+extern bool show_details;
+extern bool ring_bell;
+extern bool use_color;
+extern bool find_ignore_stairs;
+extern bool find_ignore_doors;
+extern bool find_cut;
+extern bool find_examine;
+extern bool disturb_move;
+extern bool disturb_near;
+extern bool disturb_panel;
+extern bool disturb_detect;
+extern bool disturb_state;
+extern bool disturb_minor;
+extern bool disturb_other;
+extern bool alert_hitpoint;
+extern bool alert_failure;
+extern bool last_words;
+extern bool speak_unique;
+extern bool auto_destroy;
+extern bool wear_confirm@confirm_wear;
+extern bool confirm_stairs;
+extern bool disturb_pets;
+extern bool easy_inven;
+extern bool easy_open;
+extern bool easy_disarm;
+extern bool easy_tunnel;
+extern bool auto_haggle;
+extern bool auto_scum;
+extern bool stack_allow_items;
+extern bool stack_allow_wands;
+extern bool expand_look;
+extern bool expand_list;
+extern bool view_perma_grids;
+extern bool view_torch_grids;
+extern bool monster_lite;
+extern bool dungeon_align;
+extern bool dungeon_stair;
+extern bool player_symbols;
+extern bool plain_descriptions;
+extern bool smart_learn;
+extern bool smart_cheat;
+extern bool stupid_monsters;
+extern bool small_levels;
+extern bool empty_levels;
+extern bool view_reduce_lite;
+extern bool view_reduce_view;
+extern bool avoid_abort;
+extern bool avoid_shimmer;
+extern bool avoid_other;
+extern bool flush_failure;
+extern bool flush_disturb;
+extern bool flush_command;
+extern bool fresh_before;
+extern bool fresh_after;
+extern bool fresh_message;
+extern bool compress_savefile;
+extern bool hilite_player;
+extern bool view_lited_grid;
+extern bool center_player;
+extern bool exp_need;
+extern bool auto_more;
+extern bool player_char_health;
+extern bool linear_stats;
+extern bool inventory_no_move;
+extern bool maximize;
+extern bool preserve;
+extern bool autoroll;
+extern bool point_based;
+extern bool permanent_levels;
+extern bool ironman_rooms;
+extern bool take_notes;
+extern bool auto_notes;
+extern bool fast_autoroller;
+extern bool joke_monsters;
+extern bool always_small_level;
+extern bool cheat_peek;
+extern bool cheat_hear;
+extern bool cheat_room;
+extern bool cheat_xtra;
+extern bool cheat_know;
+extern bool cheat_live;
+extern bool autosave_t;
+extern bool autosave_l;
+extern s16b autosave_freq;
+extern bool automatizer_enabled;
+extern bool character_generated;
+extern byte hitpoint_warn;
+extern byte delay_factor;
+extern bool option_ingame_help;
+extern s16b savefile_compress;
+extern bool keypad_autorun;
+}
+
+/* Repeat mode */
+module repeat_keys
+{
+extern s32b repeat__idx@cur_idx;
+extern s32b repeat__cnt@cur_cnt;
+extern void repeat_pop@pop();
+extern void repeat_push@push(s32b what);
+extern bool repeat_pull@pull(s32b *what=0);
+extern void repeat_check@check(void);
+extern void get_count(s32b number, s32b max);
+}
+
+s16b add_new_inventory_slot(cptr desc, cptr name, cptr describe, cptr wear, cptr takeoff);
+
+/*
+ * A generic buffer(can contain lua bytecode for example) that can be
+ * put in a flagset
+ */
+struct buffer_type
+{
+	u32b len;
+	char buf[0xFFFFFFFF];
+};
+extern buffer_type *data_buffer_alloc();
+extern void data_buffer_delete(buffer_type *buf);
+extern buffer_type *data_buffer_dup(buffer_type *buf);
+
+/*
+ * Loadsave stuff
+ */
+module loadsave
+{
+extern void do_store(byte type, store_type *str, s32b flag);
+extern void do_monster(byte type, monster_type *m_ptr, s32b flag);
+extern void do_item(byte type, object_type *o_ptr, s32b flag);
+extern void do_char(char *, s32b);
+extern void do_byte(byte *, s32b);
+extern void do_u16b(u16b *, s32b);
+extern void do_s16b(s16b *, s32b);
+extern void do_u32b(u32b *, s32b);
+extern void do_s32b(s32b *, s32b);
+extern void do_string_nolen(char **, s32b);
+extern void do_flags(flags_type *f, s32b flag);
+extern bool load_dungeon(s32b dungeon, s32b level, s32b *saved_turn=0);
+extern void save_dungeon(s32b saved_turn);
+extern bool save_player(void);
+extern bool load_player(bool quickstart);
+#define LS_LOAD 3
+#define LS_SAVE 7
+}
+
+/* Square root */
+extern s32b sroot(s32b n);
+
+
+extern bool is_a_vowel(s32b ch);
+
+extern bool check_prevent_cmd_aux(object_type* o_ptr, char cmd = '\0');
+
+$static s32b negate_bits(s32b i) { return ~i; }
+static s32b negate_bits(s32b i);
+
+/****************************************
+ * Traps.
+ **************************************/
+
+/** @def DISARM_SUCCESS
+ * @note Disarming succeeded.
+ */
+#define DISARM_SUCCESS
+
+/** @def DISARM_FAILURE
+ * @note Disarming failed, but didn't activate the trap.
+ */
+#define DISARM_FAILURE
+
+/** @def DISARM_TRIGGERED
+ * @note Disarming failed *AND* activated the trap.
+ */
+#define DISARM_TRIGGERED
+
+extern void place_trap(s32b y, s32b x, s32b faction);
+
+extern s32b get_num_traps(flags_type* traps, bool known_traps = FALSE,
+						 s16b faction = -1, bool friendly_traps = FALSE,
+						 bool apparent_traps = FALSE);
+
+extern s32b get_num_location_traps(s32b y, s32b x, bool known_traps = FALSE,
+								  s16b faction = -1,
+								  bool friendly_traps = FALSE,
+								  bool apparent_traps = FALSE);
+
+extern s32b get_num_object_traps(object_type* obj, bool known_traps = FALSE,
+								s16b faction = -1,
+								bool friendly_traps = FALSE,
+								bool apparent_traps = FALSE);
+
+extern s16b do_play_cmovie(cptr cmov_file, bool show_info);
+
+extern bool character_icky;
+
+
+module pathfind
+{
+	extern bool pathfind_get_first@get_first(monster_type *m_ptr, s32b start_y, s32b start_x, s32b goal_y, s32b goal_x, s32b *res_y=0, s32b *res_x=0, bool *complete=FALSE);
+	extern bool pathfind_get_next@get_next(s32b *res_y=0, s32b *res_x=0);
+}
+
+
+$static cptr savefile_lua(cptr save) { if (save != NULL) strncpy(savefile, save, 1023); return savefile; }
+static cptr savefile_lua@savefile(cptr save=NULL);
+
+$extern SDL_TimerID rt_timer_add(s32b interval, void *c_callback);
+$extern void rt_timer_del(SDL_TimerID id);
+module time
+{
+	extern SDL_TimerID rt_timer_add@__rt_add(s32b interval, void *c_callback = NULL);
+	extern void rt_timer_del@__rt_del(SDL_TimerID id);
+}
+
+/* Character sheet stuff */
+
+extern char index_to_label(s32b i);
+
+extern cptr ENGINE_DIR;
+extern cptr ENGINE_DIR_DEP;
+
+/* SDL fast draw operations */
+extern void sdl_utl_fast_draw(bool enable);
+
+extern u16b extract_energy[300]@__extract_energy;

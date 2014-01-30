@@ -1,0 +1,1547 @@
+/* File: monster.pkg */
+
+/*
+ * Purpose: Lua interface defitions for monsters.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+/* To make easy object creations */
+$static monster_type lua_monster_forge;
+/** @var  monster_forge;
+ * @brief monster_type
+ */
+static monster_type lua_monster_forge @ monster_forge;
+
+
+/** @name Monster factions
+ * @note Monster factions, indexes factions hashtable
+ * @{ */
+/** @def FACTION_PLAYER
+ */
+#define FACTION_PLAYER          0
+/** @def FACTION_TOWN
+ */
+#define FACTION_TOWN            1
+/** @def FACTION_DUNGEON
+ */
+#define FACTION_DUNGEON         2
+/** @} */
+
+
+/** @name Monster flags
+ * @{ */
+/** @def MFLAG_VIEW
+ * @note Monster is in line of sight
+ */
+#define MFLAG_VIEW      0x00000001
+/** @def MFLAG_QUEST
+ * @note Monster is subject to a quest
+ */
+#define MFLAG_QUEST     0x00000002
+/** @def MFLAG_PARTIAL
+ * @note Monster is a partial summon
+ */
+#define MFLAG_PARTIAL   0x00000004
+/** @def MFLAG_CONTROL
+ * @note Monster is controlled
+ */
+#define MFLAG_CONTROL   0x00000008
+/** @def MFLAG_BORN
+ * @note Monster is still being born
+ */
+#define MFLAG_BORN      0x00000010
+/** @def MFLAG_NICE
+ * @note Monster is still being nice
+ */
+#define MFLAG_NICE      0x00000020
+/** @def MFLAG_SHOW
+ * @note Monster is recently memorized
+ */
+#define MFLAG_SHOW      0x00000040
+/** @def MFLAG_MARK
+ * @note Monster is currently memorized
+ */
+#define MFLAG_MARK      0x00000080
+/** @def MFLAG_NO_DROP
+ * @note Monster wont drop obj/corpse
+ */
+#define MFLAG_NO_DROP   0x00000100
+/** @def MFLAG_QUEST2
+ * @note Monster is subject to a quest
+ */
+#define MFLAG_QUEST2    0x00000200
+/** @} */
+
+
+/** @struct monster_blow
+ * @brief Monster blows (attacks)
+ * @{ */
+struct monster_blow
+{
+	/** @var method
+	 * @brief Number
+	 */
+	byte method;
+	/** @var effect
+	 * @brief Number
+	 */
+	byte effect;
+	/** @var d_dice
+	 * @brief Number
+	 */
+	byte d_dice;
+	/** @var d_side
+	 * @brief Number
+	 */
+	byte d_side;
+};
+/** @} */
+
+
+/** @struct monster_race
+ * @brief Monster race
+ * @{ */
+struct monster_race
+{
+	/** @var name
+	 * @brief String
+	 * @note Name (offset)
+	 */
+	cptr name;
+	/** @var text
+	 * @brief String
+	 * @note Text (offset)
+	 */
+	cptr text;
+
+	/** @var hdice
+	 * @brief Number
+	 * @note Creatures hit dice count
+	 */
+	byte hdice;
+	/** @var hside
+	 * @brief Number
+	 * @note Creatures hit dice sides
+	 */
+	byte hside;
+
+	/** @var ac
+	 * @brief Number
+	 * @note Armour Class
+	 */
+	s16b ac;
+
+	/** @var sleep
+	 * @brief Number
+	 * @note Inactive counter (base)
+	 */
+	s16b sleep;
+	/** @var aaf
+	 * @brief Number
+	 * @note Area affect radius (1-100)
+	 */
+	byte aaf;
+	/** @var speed
+	 * @brief Number
+	 * @note Speed (normally 110)
+	 */
+	byte speed;
+
+	/** @var mexp
+	 * @brief Number
+	 * @note Exp value for kill
+	 */
+	s32b mexp;
+
+	/** @var weight
+	 * @brief Number
+	 * @note Weight of the monster
+	 */
+	s32b weight;
+
+	/** @var freq_inate
+	 * @brief Number
+	 * @note Inate spell frequency
+	 */
+	byte freq_inate;
+	/** @var freq_spell
+	 * @brief Number
+	 * @note Other spell frequency
+	 */
+	byte freq_spell;
+
+	/** @var flags
+	 * @brief flags_type
+	 * @note Flags (general)
+	 */
+	flags_type flags;
+	/** @var spells
+	 * @brief flags_type
+	 * @note Spells
+	 */
+	flags_type spells;
+
+	/** @var blow
+	 * @brief flags_type
+	 * @note Up to four blows per round
+	 */
+	flags_type blow;
+
+	/** @var body_parts
+	 * @brief flags_type
+	 * @note To help to decide what to use when body changing
+	 */
+	flags_type body_parts;
+
+	/** @var level
+	 * @brief Number
+	 * @note Level of creature
+	 */
+	byte level;
+	/** @var rarity
+	 * @brief Number
+	 * @note Rarity of creature
+	 */
+	byte rarity;
+
+
+	/** @var d_attr
+	 * @brief Number
+	 * @note Default monster attribute
+	 */
+	byte d_attr;
+	/** @var d_char
+	 * @brief String
+	 * @note Default monster character
+	 */
+	char d_char;
+	/** @var sval
+	 * @brief Number
+	 * @note Default monster sval
+	 */
+	s16b sval;
+
+
+	/** @var x_attr
+	 * @brief Number
+	 * @note Desired monster attribute
+	 */
+	byte x_attr;
+	/** @var x_char
+	 * @brief String
+	 * @note Desired monster character
+	 */
+	char x_char;
+
+
+	/** @var max_num
+	 * @brief Number
+	 * @note Maximum population allowed per level
+	 */
+	s16b max_num;
+
+	/** @var cur_num
+	 * @brief Number
+	 * @note Monster population on current level
+	 */
+	s16b cur_num;
+
+
+	/** @var r_sights
+	 * @brief Number
+	 * @note Count sightings of this monster
+	 */
+	s16b r_sights;
+	/** @var r_deaths
+	 * @brief Number
+	 * @note Count deaths from this monster
+	 */
+	s16b r_deaths;
+
+	/** @var r_pkills
+	 * @brief Number
+	 * @note Count monsters killed in this life
+	 */
+	s16b r_pkills;
+	/** @var r_tkills
+	 * @brief Number
+	 * @note Count monsters killed in all lives
+	 */
+	s16b r_tkills;
+
+	/** @var r_wake
+	 * @brief Number
+	 * @note Number of times woken up (?)
+	 */
+	byte r_wake;
+	/** @var r_ignore
+	 * @brief Number
+	 * @note Number of times ignored (?)
+	 */
+	byte r_ignore;
+
+	/** @var r_xtra1
+	 * @brief Number
+	 * @note Something (unused)
+	 */
+	byte r_xtra1;
+	/** @var r_xtra2
+	 * @brief Number
+	 * @note Something (unused)
+	 */
+	byte r_xtra2;
+
+	/** @var r_drop_gold
+	 * @brief Number
+	 * @note Max number of gold dropped at once
+	 */
+	byte r_drop_gold;
+	/** @var r_drop_item
+	 * @brief Number
+	 * @note Max number of item dropped at once
+	 */
+	byte r_drop_item;
+
+	/** @var r_cast_inate
+	 * @brief Number
+	 * @note Max number of inate spells seen
+	 */
+	byte r_cast_inate;
+	/** @var r_cast_spell
+	 * @brief Number
+	 * @note Max number of other spells seen
+	 */
+	byte r_cast_spell;
+
+	/** @var r_blows[4]
+	 * @brief Number
+	 * @note Number of times each blow type was seen
+	 */
+	byte r_blows[4];
+
+	/** @var r_flags
+	 * @brief flags_type
+	 * @note Observed racial flags
+	 */
+	flags_type r_flags;
+
+	/** @var total_visible
+	 * @brief Number
+	 * @note Amount of this race that are visible
+	 */
+	byte total_visible;
+};
+/** @} */
+
+
+/** @struct monster_ego
+ * @brief Monster Ego
+ * @{ */
+struct monster_ego
+{
+	/** @var name
+	 * @brief String
+	 * @note Name (offset)
+	 */
+	cptr name;
+	/** @var before
+	 * @brief Boolean
+	 * @note Display ego before or after
+	 */
+	bool before;
+
+	/** @var blow
+	 * @brief flags_type
+	 * @note blows per round
+	 */
+	flags_type blow;
+	/** @var blow_dice
+	 * @brief flags_type
+	 * @note blows hit dice count
+	 */
+	flags_type blowm_dice;
+	/** @var blow_side
+	 * @brief flags_type
+	 * @note blows hit dice sides
+	 */
+	flags_type blowm_side;
+
+	/** @var hdice
+	 * @brief Number
+	 * @note Creatures hit dice count
+	 */
+	s16b hdice;
+	/** @var hside
+	 * @brief Number
+	 * @note Creatures hit dice sides
+	 */
+	s16b hside;
+
+	/** @var ac
+	 * @brief Number
+	 * @note Armour Class
+	 */
+	s16b ac;
+
+	/** @var sleep
+	 * @brief Number
+	 * @note Inactive counter (base)
+	 */
+	s16b sleep;
+	/** @var aaf
+	 * @brief Number
+	 * @note Area affect radius (1-100)
+	 */
+	s16b aaf;
+	/** @var speed
+	 * @brief Number
+	 * @note Speed (normally 110)
+	 */
+	s16b speed;
+
+	/** @var mexp
+	 * @brief Number
+	 * @note Exp value for kill
+	 */
+	s32b mexp;
+
+	/** @var weight
+	 * @brief Number
+	 * @note Weight of the monster
+	 */
+	s32b weight;
+
+	/** @var freq_inate
+	 * @brief Number
+	 * @note Inate spell frequency
+	 */
+	byte freq_inate;
+	/** @var freq_spell
+	 * @brief Number
+	 * @note Other spell frequency
+	 */
+	byte freq_spell;
+
+	/* Ego flags */
+	/** @var flags
+	 * @brief flags_type
+	 * @note ego flags
+	 */
+	flags_type flags;
+	/** @var hflags
+	 * @brief flags_type
+	 * @note ego flags
+	 */
+	flags_type hflags;
+
+	/* Monster flags */
+	/** @var mflags
+	 * @brief flags_type
+	 * @note monster flags
+	 */
+	flags_type mflags;
+
+	/** @var nflags
+	 * @brief flags_type
+	 * @note Negative Flags, to be removed from the monster flags
+	 */
+	flags_type nflags;
+
+	/** @var msflags
+	 * @brief flags_type
+	 * @note Added Spell flags
+	 */
+	flags_type msflags;
+
+	/** @var nsflags
+	 * @brief flags_type
+	 * @note Removed Spell flags
+	 */
+	flags_type nsflags;
+	/** @var remove_all_spells
+	 * @brief Boolean
+	 * @note Remove all spells (?)
+	 */
+	bool remove_all_spells;
+
+	/** @var level
+	 * @brief Number
+	 * @note Level of creature
+	 */
+	s16b level;
+	/** @var rarity
+	 * @brief Number
+	 * @note Rarity of creature
+	 */
+	s16b rarity;
+
+
+	/** @var d_attr
+	 * @brief Number
+	 * @note Default monster attribute
+	 */
+	byte d_attr;
+	/** @var d_char
+	 * @brief String
+	 * @note Default monster character
+	 */
+	char d_char;
+
+	/** @var g_attr
+	 * @brief Number
+	 * @note Overlay graphic attribute
+	 */
+	byte g_attr;
+	/** @var g_char
+	 * @brief String
+	 * @note Overlay graphic character
+	 */
+	char g_char;
+
+	/** @var r_char[5]
+	 * @brief String
+	 * @note Monster race allowed
+	 */
+	char r_char[5];
+	/** @var nr_char[5]
+	 * @brief String
+	 * @note Monster race not allowed
+	 */
+	char nr_char[5];
+
+	/** @var load_script
+	 * @brief String
+	 * @note Load script
+	 */
+	cptr load_script;
+};
+/** @} */
+
+
+/** @struct monster_type
+ * @brief Monster type
+ * @{ */
+struct monster_type
+{
+	/** @var r_idx
+	 * @brief Number
+	 * @note Monster race index
+	 */
+	s16b r_idx;
+	/** @var d_char
+	 * @brief String
+	 * @note Default monster character
+	 */
+	char d_char;
+	/** @var sval
+	 * @brief Number
+	 * @note Monster sval
+	 */
+	s16b sval;
+
+	/** @var ego
+	 * @brief Number
+	 * @note Ego monster type
+	 */
+	u16b ego;
+
+	/** @var fy
+	 * @brief Number
+	 * @note Y location on map
+	 */
+	byte fy;
+	/** @var fx
+	 * @brief Number
+	 * @note X location on map
+	 */
+	byte fx;
+
+	/** @var hp
+	 * @brief Number
+	 * @note Current Hit points
+	 */
+	s16b hp;
+	/** @var maxhp
+	 * @brief Number
+	 * @note Max Hit points
+	 */
+	s16b maxhp;
+
+	/** @var blow
+	 * @brief flags_type
+	 * @note blows per round
+	 */
+	flags_type blow;
+
+	/** @var speed
+	 * @brief Number
+	 * @note Speed (normally 110)
+	 */
+	byte speed;
+	/** @var level
+	 * @brief Number
+	 * @note Level of creature
+	 */
+	byte level;
+	/** @var ac
+	 * @brief Number
+	 * @note Armour Class
+	 */
+	s16b ac;
+	/** @var exp
+	 * @brief Number
+	 * @note Experience
+	 */
+	u32b exp;
+
+	/** @var csleep
+	 * @brief Number
+	 * @note Inactive counter
+	 */
+	s16b csleep;
+
+	/** @var mspeed
+	 * @brief Number
+	 * @note Monster "speed"
+	 */
+	byte mspeed;
+	/** @var energy
+	 * @brief Number
+	 * @note Monster "energy"
+	 */
+	s32b energy;
+
+	/** @var stunned
+	 * @brief Number
+	 * @note Monster is stunned
+	 */
+	byte stunned;
+	/** @var confused
+	 * @brief Number
+	 * @note Monster is confused
+	 */
+	byte confused;
+	/** @var monfear
+	 * @brief Number
+	 * @note Monster is afraid
+	 */
+	byte monfear;
+
+	/** @var freq_inate
+	 * @brief Number
+	 * @note Inate spell frequency
+	 */
+	byte freq_inate;
+	/** @var freq_spell
+	 * @brief Number
+	 * @note Other spell frequency
+	 */
+	byte freq_spell;
+
+	/** @var flags
+	 * @brief flags_type
+	 * @note flags
+	 */
+	flags_type flags;
+	/** @var spells
+	 * @brief flags_type
+	 * @note flags
+	 */
+	flags_type spells;
+
+	/** @var bleeding
+	 * @brief Number
+	 * @note Monster is bleeding
+	 */
+	s16b bleeding;
+	/** @var poisoned
+	 * @brief Number
+	 * @note Monster is poisoned
+	 */
+	s16b poisoned;
+
+	/** @var cdis
+	 * @brief Number
+	 * @note Current dis from player
+	 */
+	byte cdis;
+
+	/** @var mflag
+	 * @brief Number
+	 * @note Extra monster flags
+	 */
+	s32b mflag;
+
+	/** @var ml
+	 * @brief Boolean
+	 * @note Monster is "visible"
+	 */
+	bool ml;
+
+	/** @var inventory
+	 * @brief flags_type
+	 * @note Object being held (if any)
+	 */
+	flags_type inventory;
+
+	/** @var ai
+	 * @brief Number
+	 * @note Current AI state
+	 */
+	u32b ai;			/* Current AI state */
+
+	/** @var ai
+	 * @brief flags_type
+	 * @note AI States
+	 */
+	flags_type ai_states;		/* AI states */
+
+	u16b ai_speed;			/* AI states */
+	byte ai_action;			/* AI states */
+	s16b ai_move_y;			/* AI states */
+	s16b ai_move_x;			/* AI states */
+
+	/** @var smart
+	 * @brief Number
+	 * @note Field for "smart_learn"
+	 */
+	u32b smart;
+
+	/** @var faction
+	 * @brief Number
+	 * @note Faction the monster belongs to
+	 */
+	u32b faction;
+
+	/** @var target
+	 * @brief Number
+	 * @note Monster target
+	 */
+	s16b target;
+
+	/** @var possessor
+	 * @brief Number
+	 * @note Is it under the control of a possessor ?
+	 */
+	s16b possessor;
+};
+/** @} */
+
+
+$static monster_type *lua_get_monster(s32b m_idx){return flag_get_monster(&monst_list, m_idx);}
+/** @fn monster(s32b m_idx)
+ * @brief Return the monster with index "m_idx" in the monster list.
+ * @param m_idx Number \n the index of the monster in the monster list
+ * @brief Monster index
+ * @return monster_type \n The monster.
+ * @note (see file w_mnster.c)
+ */
+static monster_type *lua_get_monster @ monster(s32b m_idx);
+
+/** @var monst_list
+ * @brief flags_type
+ * @note List of monsters
+ */
+extern flags_type monst_list;
+
+/** @fn race_info_idx(s32b r_idx, s32b ego)
+ * @brief Get monster info and ego info for monster with monster index "r_idx"
+ * and monster ego "ego".
+ * @param r_idx Number \n the index of the race in the monster race array
+ * @brief Race index
+ * @param ego Number \n the index of the ego in the monster ego array
+ * @brief Ego index
+ * @return monster_race \n The monster race.
+ * @note
+ * If "ego" > 0, the ego information is applied to the monster information and
+ * the new monster information is returned.
+ * @note
+ * For example, race_info_idx(141,7) will create a brown yeek (monster)
+ * shaman (ego).
+ * @note (see file monster2.c)
+ */
+extern monster_race* race_info_idx(s32b r_idx, s32b ego);
+
+/** @fn delete_monster_idx(s32b i)
+ * @brief Delete monster "i" from the monster array.
+ * @param i Number \n the index of the monster in the monster list
+ * @brief Monster index
+ * @return void
+ * @note (see file monster2.c)
+ */
+extern void delete_monster_idx(s32b i);
+
+/** @fn m_pop(void)
+ * @brief Get an empty slot in the monster list.
+ * @return Number \n The index of an empty slot the monster list.
+ * @note
+ * If there are no empty slots, a slot will be reclaimed from a "dead"
+ * monster. If all slots are full, 0 is returned, which means the function
+ * has failed ("Too many monsters!").
+ * @note (see file monster2.c)
+ */
+extern s16b m_pop(void);
+
+/** @fn set_mon_num_hook(void)
+ * @brief Sets the "monster restriction function" to the default one.
+ */
+extern void set_mon_num_hook(void);
+
+/** @fn get_mon_num_prep(void)
+ * @brief Apply a "monster restriction function" to the "monster allocation
+ * table".
+ * @return Number \n 0 (success) always.
+ * @note
+ * There are no parameters, but there are some other variables which will
+ * need to be set. They are get_mon_num_hook and get_mon_num2_hook. They
+ * are pointers to functions.
+ * @note
+ * For example, get_mon_num_hook = monster_volcano means when
+ * get_mon_num_hook is called (*get_mon_num_hook)(index), the actual
+ * function called is monster_volcano(index). This particular function
+ * returns TRUE if the monster indicated by "index" has the
+ * RF8_WILD_VOLCANO flag set.
+ * @note
+ * It is a good idea to store the old value of get_mon_num_hook before
+ * setting a new one, and restoring it when your function is finished.
+ * @note
+ * Following is a list of functions which can be assigned to
+ * get_mon_num_hook:
+ * create_molds_hook
+ * create_townpeople_hook
+ * monster_dungeon
+ * monster_grass
+ * monster_mountain
+ * monster_ocean
+ * monster_quest
+ * monster_shore
+ * monster_town
+ * monster_volcano
+ * monster_waste
+ * monster_wood
+ * mutate_monster_okay
+ * place_monster_okay
+ * summon_specific_okay
+ * vault_aux_animal
+ * vault_aux_chapel
+ * vault_aux_clone
+ * vault_aux_demon
+ * vault_aux_dragon
+ * vault_aux_giant
+ * vault_aux_jelly
+ * vault_aux_kennel
+ * vault_aux_orc
+ * vault_aux_symbol
+ * vault_aux_treasure
+ * vault_aux_troll
+ * vault_aux_undead
+ * @note
+ * Or you can write your own. The function must take an integer (index)
+ * as a parameter and return boolean (TRUE if the monster is selected,
+ * or FALSE if it is not).
+ * @note (see file monster2.c)
+ */
+extern errr get_mon_num_prep(void);
+
+/** @fn get_mon_num(s32b level)
+ * @brief For the given level "level", return the index of an appropriate
+ * monster race.
+ * @param level Number \n a dungeon level (which is adjusted before
+ * it is used).
+ * @brief Dungeon level
+ * @return Number \n The index of a monster race in the monster race array.
+ * @note
+ * This function uses the "prob2" field of the "monster allocation table",
+ * and various local information, to calculate the "prob3" field of the
+ * same table, which is then used to choose an "appropriate" monster, in
+ * a relatively efficient manner.
+ * @note
+ * Note that "town" monsters will *only* be created in the town, and
+ * "normal" monsters will *never* be created in the town, unless the
+ * "level" is "modified", for example, by polymorph or summoning.
+ * @note
+ * There is a small chance (1/50) of "boosting" the given depth by
+ * a small amount (up to four levels), except in the town.
+ * @note
+ * It is (slightly) more likely to acquire a monster of the given level
+ * than one of a lower level.  This is done by choosing several monsters
+ * appropriate to the given level and keeping the "hardest" one.
+ * @note
+ * Note that if no monsters are "appropriate", then this function will
+ * fail, and return zero, but this should *almost* never happen.
+ * @note (see file monster2.c)
+ */
+extern s16b get_mon_num(s32b level);
+
+$static char *lua_monster_desc(monster_type *m_ptr, s32b mode){static char buf[200]; monster_desc(buf, m_ptr, mode); return buf;}
+/** @fn monster_desc(monster_type *m_ptr, s32b mode)
+ * @brief Return a monster description for monster "monster_type" using flag
+ * "mode".
+ * @param *m_ptr monster_type \n the monster
+ * @brief Monster
+ * @param mode Number \n description mode (see below)
+ * @brief Description mode
+ * @return String \n The description of the monster.
+ * @note
+ * We can correctly describe monsters based on their visibility.
+ * We can force all monsters to be treated as visible or invisible.
+ * We can build nominatives, objectives, possessives, or reflexives.
+ * We can selectively pronominalize hidden, visible, or all monsters.
+ * We can use definite or indefinite descriptions for hidden monsters.
+ * We can use definite or indefinite descriptions for visible monsters.
+ * @note
+ * Pronominalization involves the gender whenever possible and allowed,
+ * so that by cleverly requesting pronominalization / visibility, you
+ * can get messages like "You hit someone.  She screams in agony!".
+ * @note
+ * Reflexives are acquired by requesting Objective plus Possessive.
+ * @note
+ * If no m_ptr arg is given (?), the monster is assumed to be hidden,
+ * unless the "Assume Visible" mode is requested.
+ * @note
+ * If no r_ptr arg is given, it is extracted from m_ptr and r_info
+ * If neither m_ptr nor r_ptr is given, the monster is assumed to
+ * be neuter, singular, and hidden (unless "Assume Visible" is set),
+ * in which case you may be in trouble... :-)
+ * @note
+ * I am assuming that no monster name is more than 70 characters long,
+ * so that "char desc[80];" is sufficiently large for any result.
+ * @note
+ * Mode Flags:
+ *   0x01 --> Objective (or Reflexive)
+ *   0x02 --> Possessive (or Reflexive)
+ *   0x04 --> Use indefinites for hidden monsters ("something")
+ *   0x08 --> Use indefinites for visible monsters ("a kobold")
+ *   0x10 --> Pronominalize hidden monsters
+ *   0x20 --> Pronominalize visible monsters
+ *   0x40 --> Assume the monster is hidden
+ *   0x80 --> Assume the monster is visible
+ *  0x100 --> Ignore insanity
+ *  0x200 --> No article
+ * @note
+ * Useful Modes:
+ *   0x00 --> Full nominative name ("the kobold") or "it"
+ *   0x04 --> Full nominative name ("the kobold") or "something"
+ *   0x80 --> Genocide resistance name ("the kobold")
+ *   0x88 --> Killing name ("a kobold")
+ *   0x22 --> Possessive, genderized if visible ("his") or "its"
+ *   0x23 --> Reflexive, genderized if visible ("himself") or "itself"
+ * @note (see file monster2.c)
+ */
+static char *lua_monster_desc @ monster_desc(monster_type *m_ptr, s32b mode);
+
+$static char *lua_monster_race_desc(s32b r_idx, s32b ego){static char buf[200]; monster_race_desc(buf, r_idx, ego); return buf;}
+/** @fn monster_race_desc(s32b r_idx, s32b ego)
+ * @brief Return the monster description for monster with monster index
+ * "r_idx" and monster ego "ego".
+ * @param r_idx Number \n the index of the race in the monster race array
+ * @brief Race index
+ * @param ego Number \n the index of the ego in the monster ego array
+ * @brief Ego index
+ * @return String \n The description of the monster race.
+ * @note
+ * The monster description is made up of the ego name (if any) and monster
+ * name, or the unique name.
+ * @note (see file w_mnster.c)
+ */
+static char *lua_monster_race_desc @ monster_race_desc(s32b r_idx, s32b ego);
+
+/** @fn monster_race_desc(char *desc, s32b r_idx, s32b ego)
+ * @brief Return the monster description "desc" for monster with monster index
+ * "r_idx" and monster ego "ego".
+ * @param *desc String
+ * @brief Description
+ * @param r_idx Number \n the index of the race in the monster race array
+ * @brief Race index
+ * @param ego Number \n the index of the ego in the monster ego array
+ * @brief Ego index
+ * @return *desc String \n The description of the monster race.
+ * @note
+ * The monster description is made up of the ego name (if any) and monster
+ * name, or the unique name.
+ * @note (see file monster2.c)
+ */
+extern void monster_race_desc(char *desc, s32b r_idx, s32b ego);
+
+/** @fn monster_carry(monster_type *m_ptr, s32b m_idx, object_type *q_ptr)
+ * @brief Allow monster "m_ptr" with monster index "m_idx" to carry object
+ * "q_ptr".
+ * @param *m_ptr monster_type \n the monster
+ * @brief Monster
+ * @param m_idx Number \n the index of the monster in the monster list
+ * @brief Monster index
+ * @param *q_ptr object_type \n the object
+ * @brief Object
+ * @return void
+ * @note
+ * The monster can only carry the object if there is room for the object in the
+ * object list.
+ * @note (see file monster2.c)
+ */
+extern void monster_carry(monster_type *m_ptr, s32b m_idx, object_type *q_ptr);
+
+/** @fn monster_level
+ * @return Number
+ */
+extern s16b monster_level;
+
+/** @fn place_monster_aux(s32b y, s32b x, s32b r_idx, bool slp, bool grp, s32b status)
+ * @brief Attempt to place a monster with monster race index "r_idx" and status
+ * "status" at grid "y", "x". The monster may be asleep ("slp") or surrounded
+ * by a group of identical monsters ("grp").
+ * @param y Number \n the y coordinate of the target grid
+ * @brief Y-coordinate
+ * @param x Number \n the x coordinate of the target grid
+ * @brief X-coordinate
+ * @param r_idx Number \n the index of the race in the monster race array
+ * @brief Race index
+ * @param slp Boolean \n TRUE if monster is asleep, otherwise FALSE
+ * @brief Asleep?
+ * @param grp Boolean \n TRUE if monster appears in a group, otherwise FALSE
+ * @brief Group?
+ * @param status Number \n the status of the monster from the player's point
+ * of view (see MSTATUS_foo flags)
+ * @brief Monster status
+ * @return Boolean \n TRUE if the monster is placed successfully, otherwise
+ * FALSE.
+ * @note
+ * Note that certain monsters are now marked as requiring "friends".
+ * These monsters, if successfully placed, and if the "grp" parameter
+ * is TRUE, will be surrounded by a "group" of identical monsters.
+ * @note
+ * Note that certain monsters are now marked as requiring an "escort",
+ * which is a collection of monsters with similar "race" but lower
+ * level.
+ * @note
+ * Some monsters induce a fake "group" flag on their escorts.
+ * @note
+ * Note the "bizarre" use of non-recursion to prevent annoying output
+ * when running a code profiler.
+ * @note
+ * Note the use of the new "monster allocation table" code to restrict
+ * the "get_mon_num()" function to "legal" escort types.
+ * @note (see file monster2.c)
+ */
+extern bool place_monster_aux(s32b y, s32b x, s32b r_idx, bool slp, bool grp, s32b status);
+
+/** @fn place_monster_aux_ego(s32b y, s32b x, s32b r_idx, s32b ego, bool slp, bool grp, s32b status)
+ * @brief Attempt to place a monster with monster race index "r_idx" and
+ * ego "ego" and status "status" at grid "y", "x". The monster may be
+ * asleep ("slp") or surrounded by a group of identical monsters ("grp").
+ *
+ * @param y Number \n the y coordinate of the target grid
+ * @brief Y-coordinate
+ * @param x Number \n the x coordinate of the target grid
+ * @brief X-coordinate
+ * @param r_idx Number \n the index of the race in the monster race array
+ * @brief Race index
+ * @param ego Number \n the index of the race ego in the monster ego array
+ * @brief Ego index
+ * @param slp Boolean \n TRUE if monster is asleep, otherwise FALSE
+ * @brief Asleep?
+ * @param grp Boolean \n TRUE if monster appears in a group, otherwise FALSE
+ * @brief Group?
+ * @param status Number \n the status of the monster from the player's point
+ * of view (see MSTATUS_foo flags)
+ * @brief Monster status
+ * @return Number \n m_idx of the placed monster, 0 or negative if failed.
+ * @note
+ * Note that certain monsters are now marked as requiring "friends".
+ * These monsters, if successfully placed, and if the "grp" parameter
+ * is TRUE, will be surrounded by a "group" of identical monsters.
+ * @note
+ * Note that certain monsters are now marked as requiring an "escort",
+ * which is a collection of monsters with similar "race" but lower
+ * level.
+ * @note
+ * Some monsters induce a fake "group" flag on their escorts.
+ * @note
+ * Note the "bizarre" use of non-recursion to prevent annoying output
+ * when running a code profiler.
+ * @note
+ * Note the use of the new "monster allocation table" code to restrict
+ * the "get_mon_num()" function to "legal" escort types.
+ * @note (see file monster2.c)
+ */
+extern s16b place_monster_aux_ego(s32b y, s32b x, s32b r_idx, s32b ego,
+                                  bool slp, bool grp, s32b status);
+
+/** @fn place_monster(s32b y, s32b x, bool slp, bool grp)
+ * @brief Attempt to place a monster at grid "y", "x". The monster may be
+ * asleep ("slp") or surrounded by a group of identical monsters ("grp").
+ * @param y Number \n the y coordinate of the target grid
+ * @brief Y-coordinate
+ * @param x Number \n the x coordinate of the target grid
+ * @brief X-coordinate
+ * @param slp Boolean \n TRUE if monster is asleep, otherwise FALSE
+ * @brief Asleep?
+ * @param grp Boolean \n TRUE if monster appears in a group, otherwise FALSE
+ * @brief Group?
+ * @return Boolean \n TRUE if the monster is placed successfully, otherwise
+ * FALSE.
+ * @note
+ * Attempt to find a monster appropriate to the "monster_level"
+ * @note (see file monster2.c)
+ */
+extern bool place_monster(s32b y, s32b x, bool slp, bool grp);
+
+/** @fn place_monster_type(s32b y, s32b x, monster_type *m_ptr)
+ * @param y Number \n the y coordinate of the target grid
+ * @brief Y-coordinate
+ * @param x Number \n the x coordinate of the target grid
+ * @brief X-coordinate
+ * @param *m_ptr monster_type \n the monster type
+ * @brief Monster type
+ * @return Number
+ */
+extern s16b place_monster_type(s32b y, s32b x, monster_type *m_ptr);
+
+
+/** @fn void monster_prep(monster_type* m_ptr, s32b r_idx, s32b ego)
+ * @brief Setup a monster_type struct as approriate for the given
+ * race and ego, but without placing it in the dungeon or calling
+ * any hooks.
+ * @param *m_ptr monster_type \n monster type
+ * @brief The monster_type struct to be prepared
+ * @param r_dix Number \n the race index
+ * @brief The race the monster is to have
+ * @param ego Number \n the ego index
+ * @brief The ego the monster is to have
+ */
+extern void monster_prep(monster_type* m_ptr, s32b r_idx, s32b ego);
+
+/** @var monster_type*[] placed_monsters
+ * @brief Array of recently placed monsters.
+ */
+extern monster_type *placed_monsters[PLACED_MONSTERS_MAX];
+
+/** @var s32b[] placed_monster_ids
+ * @brief The "placed_monster_id" of the placed monsters,
+ * to distinguish who caused them to be placed in the case that
+ * hooks lead to recursion.
+ */
+extern s32b placed_monster_ids[PLACED_MONSTERS_MAX];
+
+/** @var s32b placed_monsters_num
+ * @brief The number of recently placed monsters.
+ */
+extern s32b placed_monsters_num;
+
+/** @var s32b placed_monster_id
+ * @brief The number that gets assigned to placed_mosnters_idx[] when
+ * a monster is placed.
+ */
+extern s32b placed_monster_id;
+
+/** @fn place_monster_one(s32b y, s32b x, s32b r_idx, s32b ego, bool slp, s32b status)
+ * @brief Attempt to place a monster with monster race index "r_idx", monster
+ * ego "ego" and status "status" at grid "y", "x". The monster may be asleep
+ * ("slp").
+ * @param y Number \n the y coordinate of the target grid
+ * @brief Y-coordinate
+ * @param x Number \n the x coordinate of the target grid
+ * @brief X-coordinate
+ * @param r_idx Number \n the index of the race in the monster race array
+ * @brief Race index
+ * @param ego Number \n the index of the ego in the monster ego array
+ * @brief Ego index
+ * @param slp Boolean \n TRUE if monster is asleep, otherwise FALSE
+ * @brief Asleep?
+ * @param status Number \n the status of the monster from the player's point
+ * of view (see MSTATUS_foo flags)
+ * @brief Monster status
+ * @return Number \n The index of the placed monster in the monster list.
+ * @note
+ * To give the player a sporting chance, any monster that appears in
+ * line-of-sight and is extremely dangerous can be marked as
+ * "FORCE_SLEEP", which will cause them to be placed with low energy,
+ * which often (but not always) lets the player move before they do.
+ * @note
+ * This routine refuses to place out-of-depth "FORCE_DEPTH" monsters.
+ * @note
+ * XXX XXX XXX Use special "here" and "dead" flags for unique monsters,
+ * remove old "cur_num" and "max_num" fields.
+ * @note
+ * XXX XXX XXX Actually, do something similar for artifacts, to simplify
+ * the "preserve" mode, and to make the "what artifacts" flag more useful.
+ * @note
+ * This is the only function which may place a monster in the dungeon,
+ * except for the savefile loading code.
+ * @note (see file monster2.c)
+ */
+extern s16b place_monster_one(s32b y, s32b x, s32b r_idx, s32b ego, bool slp, s32b status);
+
+/** @var bool place_monster_one_no_drop
+ * @brief While this is set to true, monster creation will not give inventories to monsters
+ */
+extern bool place_monster_one_no_drop;
+
+/** @fn alloc_monster(s32b dis, bool slp)
+ * @brief Attempt to allocate a random monster in the dungeon.
+ * @param dis Number \n the minimum distance to place the monster from
+ * the player
+ * @param slp Boolean \n generate the monster asleep?
+ * @note Uses "monster_level" for the monster level
+ */
+extern bool alloc_monster(s32b dis, bool slp);
+
+/** @fn is_friend(monster_type *m_ptr)
+ * @brief Return a value to indicate the status of monster "m_ptr".
+ * @param *m_ptr monster_type \n the monster
+ * @brief Monster
+ * @return Number \n -1 if monster is an enemy, 0 if it is neutral, and 1 if
+ * it is friendly.
+ * @note (see file monster3.c)
+ */
+extern s32b is_friend(monster_type *m_ptr);
+
+/** @fn is_enemy(monster_type *m_ptr, monster_type *t_ptr)
+ * @brief Determine if monster "m_ptr" should attack monster "t_ptr".
+ * @param *m_ptr monster_type \n the monster
+ * @brief Monster
+ * @param *t_ptr monster_type \n the target monster
+ * @brief Target monster
+ * @return Boolean \n TRUE if monster "m_ptr" should attack monster "t_ptr",
+ * otherwise FALSE.
+ * @note
+ * If "m_ptr" is stupid and "r_ptr" is a different type of monster then the
+ * function will return TRUE.
+ * If "m_ptr" is not neutral and "r_ptr" is a breeder, and "r_ptr" is a
+ * different type of monster then the function will return TRUE (and vice
+ * versa).
+ * If both monsters are not neutral and one is friendly and the other isn't
+ * then the function will return TRUE.
+ * @note (see file monster3.c)
+ */
+extern bool is_enemy(monster_type *m_ptr, monster_type *t_ptr);
+
+/** @fn find_position(s32b y, s32b x, s32b *yy = 0, s32b *xx = 0)
+ * @brief Find a new grid "yy", "xx" within 6 grids of target grid "y", "x".
+ * @param y Number \n the y coordinate of the origin grid
+ * @brief Origin y-coordinate
+ * @param x Number \n the x coordinate of the origin grid
+ * @brief Origin x-coordinate
+ * @param yy Number \n the y coordinate of the target grid
+ * @brief Target y-coordinate
+ * @param xx Number \n the x coordinate of the target grid
+ * @brief Target x-coordinate
+ * @return void
+ * @note
+ * The new grid must be within line-of-sight of the target grid. A
+ * maximum of 5000 attempts is made.
+ * @note (see file lua_bind.c)
+ */
+extern void find_position(s32b y, s32b x, s32b *yy = 0, s32b *xx = 0);
+
+/** @fn get_rand_r_idx(s32b lev, s32b faction, s32b min_friend, s32b max_friend,
+				   flags_type* flags, flags_type* flags_forbid,
+				   cptr chars, cptr chars_forbid,
+				   cptr name, cptr name_forbid)
+ * @brief Get a random r_idx that matches the given conditions
+ * @param lev Number \n the monster level of the summoning monster
+ * @brief Summoner level
+ * @param min_friend \n the min friendliness a monster can have to
+ * this faction.
+ * @brief Min friendliness
+ * @param max_friend \n the max friendliness a monster can have to
+ * this faction.
+ * @brief max friendliness
+ * @note To ignore faction friendliness, set min_friend to be
+ * greater than max_friend.
+ * @param fanction Number \n the faction of the monster to be summoned.
+ * @brief Faction
+ * @param flags Flags \n the flags required of a monster.
+ * @brief Required flags
+ * @param flags_forbid Flags \n the flags a monster can't have.
+ * @brief Forbidden flags
+ * @param chars Cptr \n a monster must have a display character listed in
+ * the string.
+ * @brief Allowed display chars
+ * @param chars_forbid Cptr \n a monster must not have a display
+ * character listed in the string.
+ * @brief Forbidden display chars
+ * @param name Cptr \n a monster must contain the string in its name.
+ * @brief Required monster name
+ * @param name_forbid Cptr \n a monster must not contain the string in
+ *  its name.
+ * @brief Forbidden monster name.
+ * @return s32b \n The r_idx chosen, or 0 on an error.
+ * @note
+ * We will attempt to place the monster up to 20 times before giving up.
+ * This function has been changed.  We now take the "monster level"
+ * of the summoning monster as a parameter, and use that, along with
+ * the current dungeon level, to help determine the level of the
+ * desired monster.  Note that this is an upper bound, and also
+ * tends to "prefer" monsters of that level.  Currently, we use
+ * the average of the dungeon and monster levels, and then add
+ * five to allow slight increases in monster power.
+ * @note (see file monster2.c)
+ */
+extern s32b get_rand_r_idx(s32b lev, s32b faction, s32b min_friend, s32b max_friend,
+				   flags_type* flags, flags_type* flags_forbid,
+				   cptr chars, cptr chars_forbid,
+				   cptr name, cptr name_forbid);
+
+/** @var summon_specific_level
+ * @brief Number
+ * @note
+ * Force summoned monsters to be at this level.
+ */
+extern s32b summon_specific_level;
+
+/** @fn summon_specific(s32b y1, s32b x1, s32b lev, s32b faction,
+					 s32b min_friend, s32b max_friend, bool group_ok,
+					 flags_type* flags, flags_type* flags_forbid,
+					 cptr chars, cptr chars_forbid,
+					 cptr name, cptr name_forbid)
+ * @brief Place a monster of type "type" near grid "y","x".\n
+ * @param y1 Number \n the y coordinate of the target grid
+ * @brief Y-coordinate
+ * @param x1 Number \n the x coordinate of the target grid
+ * @brief X-coordinate
+ * @param lev Number \n the monster level of the summoning monster
+ * @brief Summoner level
+ * @param min_friend \n the min friendliness a monster can have to
+ * this faction.
+ * @brief Min friendliness
+ * @param max_friend \n the max friendliness a monster can have to
+ * this faction.
+ * @brief max friendliness
+ * @note To ignore faction friendliness, set min_friend to be
+ * greater than max_friend.
+ * @param fanction Number \n the faction of the monster to be summoned.
+ * @brief Faction
+ * @param group_ok Bool \n can a group of the monster be summoned, or
+ *  only one?
+ * @brief Group ok?
+ * @param flags Flags \n the flags required of a monster.
+ * @brief Required flags
+ * @param flags_forbid Flags \n the flags a monster can't have.
+ * @brief Forbidden flags
+ * @param chars Cptr \n a monster must have a display character listed in
+ * the string.
+ * @brief Allowed display chars
+ * @param chars_forbid Cptr \n a monster must not have a display
+ * character listed in the string.
+ * @brief Forbidden display chars
+ * @param name Cptr \n a monster must contain the string in its name.
+ * @brief Required monster name
+ * @param name_forbid Cptr \n a monster must not contain the string in
+ *  its name.
+ * @brief Forbidden monster name.
+ * @return Boolean \n TRUE if a monster was summoned, otherwise FALSE.
+ * @note
+ * We will attempt to place the monster up to 20 times before giving up.
+ * This function has been changed.  We now take the "monster level"
+ * of the summoning monster as a parameter, and use that, along with
+ * the current dungeon level, to help determine the level of the
+ * desired monster.  Note that this is an upper bound, and also
+ * tends to "prefer" monsters of that level.  Currently, we use
+ * the average of the dungeon and monster levels, and then add
+ * five to allow slight increases in monster power.
+ * @note
+ * Note that we use the new "monster allocation table" creation code
+ * to restrict the "get_mon_num()" function to the set of "legal"
+ * monsters, making this function much faster and more reliable.
+ * @note
+ * Note that this function may not succeed, though this is very rare.
+ * @note (see file monster2.c)
+ */
+extern bool summon_specific(s32b y1, s32b x1, s32b lev, s32b faction,
+					 s32b min_friend, s32b max_friend, bool group_ok,
+					 flags_type* flags, flags_type* flags_forbid,
+					 cptr chars, cptr chars_forbid,
+					 cptr name, cptr name_forbide);
+
+/** @fn summon_monster_aux(s32b y, s32b x, s32b lev, s32b faction, bool group_ok, char *fct)
+ * @brief Place a monster near grid "y","x".\n
+ * @param y Number \n the y coordinate of the target grid
+ * @brief Y-coordinate
+ * @param x Number \n the x coordinate of the target grid
+ * @brief X-coordinate
+ * @param lev Number \n the monster level of the summoning monster
+ * @brief Summoner level
+ * @param faction Number \n Faction of monster to be summoned.
+ * otherwise FALSE
+ * @brief Faction
+ * @param group_ok Bool \n Okay to summon a group of monsters, or only
+ * allow one?
+ * @brief Groups ok?
+ * @param *fct String \n the function which determines which type of monster
+ * will be summoned
+ * @brief Monster type function
+ * @return Boolean \n TRUE if a monster was summoned, otherwise FALSE.
+ * @note (see file w_mnster.c)
+ */
+extern bool lua_summon_monster @ summon_monster_aux(s32b y, s32b x, s32b lev, s32b faction, bool group_ok, char *fct);
+
+/** @fn can_create_companion()
+ * @brief Determine if a companion can be created.
+ * @return Boolean \n TRUE if a companion can be created, otherwise FALSE.
+ * @note
+ * The companions are counted. If this is less than the number allowed by
+ * the player monster lore skill, the function returns TRUE, otherwise the
+ * function returns FALSE.
+ * @note (see file monster3.c)
+ */
+extern bool can_create_companion();
+
+/** @fn monster_set_level(s32b m_idx, s32b level)
+ * @brief Set a new level for monster with monster index "m_idx".
+ * @param m_idx Number \n the index of the monster in the monster list
+ * @brief Monster index
+ * @param level Number \n the new level of the monster
+ * @brief Monster level
+ * @return void
+ * @note
+ * The new level can not exceed 150. If the new level is higher than the
+ * monster level, the monster experience value is recalculated.
+ * @note (see file monster2.c)
+ */
+extern void monster_set_level(s32b m_idx, s32b level);
+
+/** @fn can_pass_aux(flags_type *dest_flags, flags_type *passer_flags,
+                     u32b *how)
+ * @brief Does the player/monster have the necessary PASS_WALL or
+ * CAN_FLY values to enter the destination?
+ * @param dest_flags Flags \n Flags of the destinations feature/grid
+ * @brief Destination's flags
+ * @param passer_flags Flags \n Flags of thing attempt to do the passing
+ * @brief Passer's flags
+ * @param how Flag \n Returns how the monster passed the square.
+ * @return bool
+ */
+extern bool can_pass_aux(flags_type *dest_flags, flags_type *passer_flags,
+                         u32b *how=NULL);
+
+/** @fn monst_can_pass_square(monster_type *m_ptr, s32b y, s32b x, u32b* how)
+ * @brief Can the monster pass through a particular square?
+ * @param m_ptr Number \n Monster to test
+ * @param y Number \n the y location of square to test
+ * @param x Number \n the x location of the square to test
+ * @param how Flag \n Returns how the monster passed the square.
+ * @return bool
+ */
+extern bool monst_can_pass_square(monster_type *m_ptr, s32b y, s32b x,
+                                  u32b *how=NULL);
+
+/** @fn do_control_reconnect()
+ * @brief Find the controlled monster and reconnect to it.
+ * @return Boolean \n TRUE if there is a controlled monster, otherwise FALSE.
+ * @note
+ * The monster list is scanned for a monster with MFLAG_CONTROL. If it is
+ * found, the function returns TRUE.
+ * @note (see file monster3.c)
+ */
+extern bool do_control_reconnect();
+
+/* monster thing */
+
+extern u16b max_m_idx@max_monsters;
+extern u16b max_r_idx;
+extern u16b max_re_idx;
+
+extern monster_race r_info[max_r_idx];
+extern monster_ego  re_info[max_re_idx];
+
+extern bool mon_take_hit(s32b m_idx, s32b dam, bool *fear = 0, cptr note = NULL);
+extern s16b health_who;
+extern void health_track(s32b m_idx);
+extern void monster_race_track(s32b r_idx, s32b ego);
+extern bool multiply_monster(s32b m_idx, bool charm, bool clone);
+extern bool ai_multiply(s32b m_idx);
+extern s16b do_poly_monster(s32b y, s32b x);
+
+extern void message_pain(s32b m_idx, s32b dam);
+
+extern s16b lookup_race(char d_char, s16b sval);
+
+module factions
+{
+extern flags_type faction_names;
+extern void set_faction_friendliness@set_friendliness(u32b faction, u32b friend_faction, s32b percent);
+extern s32b get_faction_friendliness@get_friendliness(u32b faction, u32b friend_faction);
+extern bool change_monst_faction@change_faction(monster_type *m_ptr, u32b new_faction);
+extern u32b get_hostile_faction(monster_type *m_ptr, u32b hostile_to = FACTION_PLAYER, u32b default_faction = FACTION_DUNGEON);
+}
+
+extern monster_blow *monster_blow_new();
+extern void monster_blow_del(monster_blow *blow);
+extern monster_blow *monster_blow_dup(monster_blow *blow);
+
+extern monster_type *monster_type_new();
+extern void delete_monster_type(monster_type *m_ptr, bool del);
+extern void monster_type_free_memory(monster_type *m_ptr);
+extern monster_type *monster_type_dup(monster_type *m_ptr);
+extern void monster_type_copy(monster_type *dest, monster_type *src);
+
+extern bool mon_take_hit_mon(s32b s_idx, s32b m_idx, s32b dam, bool *fear, cptr note);
+
+extern void set_monster_ai(monster_type *m_ptr, u32b ai);
+
+extern bool find_safety(monster_type *m_ptr, s32b *yp=0, s32b *xp=0);
+extern bool find_hiding(monster_type *m_ptr, s32b *yp=0, s32b *xp=0);
+
+extern u16b get_monster_energy(monster_type *m_ptr, s32b speed_id);
+
+extern bool is_obj_mimic_at(s32b y, s32b x);
+extern object_type* get_obj_mimic_obj_at(s32b y, s32b x);
+
+extern bool is_feat_mimic_at(s32b y, s32b x);
+extern s16b get_feat_mimic_feat_at(s32b y, s32b x);
+
+module __mego__
+{
+#define MEGO_CHAR_ANY           127
+#define MEGO_ADD                0
+#define MEGO_SUB                1
+#define MEGO_FIX                2
+#define MEGO_PRC                3
+}
+
+/* monster memory */
+#define RT_NONE                0
+#define RT_MISC                1
+#define RT_RESIST              2
+#define RT_SPELL               3
+#define RT_BLOWS               4
+#define RT_MAX                 5
+
+extern bool player_monster_swap(monster_type *m_ptr);
+extern void talk_to_monster(s32b m_idx);
+
+extern bool repair_monsters;
+
+extern void wipe_m_list();
+

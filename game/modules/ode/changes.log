@@ -1,0 +1,19 @@
+changelog.keys = {
+	I = "Interface"
+	M = "Monster"
+	O = "Object"
+	G = "Gameplay"
+	m = "Misc"
+	P = "Player"
+	D = "Dungeon"
+	B = "Bug"
+	V = "Version"
+}
+changelog.text = [[
+
+[O]- Added a lantern object to ODE. Yup, you dreamt of it, I made it!
+[m]- Added licence(GPL)
+
+[V]- O.D.E 1.0.0 aka "The Dragon's Breath"
+
+]]

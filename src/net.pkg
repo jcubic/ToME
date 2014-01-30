@@ -1,0 +1,74 @@
+/* File: net.pkg */
+
+/*
+ * Purpose: Lua interface defitions for network routines.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+$#include "SDL_net.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+/** @typedef TCPsocket
+ * @note Pointer
+ */
+typedef void * TCPsocket;		/* A trick to make tolua understand this is a pointer */
+
+/** @def INADDR_ANY
+ */
+#define INADDR_ANY
+/** @def INADDR_NONE
+ */
+#define INADDR_NONE
+/* #define INADDR_BROADCAST */
+
+$static IPaddress *__resolve_host(const char *host, u16b port) { IPaddress *ip; MAKE(ip, IPaddress); return (SDLNet_ResolveHost(ip, host, port) == 0) ? ip : NULL; }
+$static void __free_ip(IPaddress *ip) { FREE(ip, IPaddress); }
+$static bool __socket_ready(TCPsocket sock) { return SDLNet_SocketReady(sock); }
+
+/** @module net
+ * @{ */
+module net
+{
+extern IPaddress *__resolve_host@resolve_host(const char *host, u16b port);
+extern void __free_ip@free_ip(IPaddress *ip);
+extern const char * SDLNet_ResolveIP@resolve_ip(IPaddress *ip);
+extern TCPsocket SDLNet_TCP_Open@open(IPaddress *ip);
+extern TCPsocket SDLNet_TCP_Accept@accept(TCPsocket server);
+extern IPaddress * SDLNet_TCP_GetPeerAddress@get_peer_address(TCPsocket sock);
+extern void SDLNet_TCP_Close@close(TCPsocket sock);
+extern SDLNet_SocketSet SDLNet_AllocSocketSet@set_alloc(s32b maxsockets);
+static bool __socket_ready@is_ready(TCPsocket sock);
+extern s32b SDLNet_TCP_AddSocket@set_add(SDLNet_SocketSet set, TCPsocket sock);
+extern s32b SDLNet_TCP_DelSocket@set_del(SDLNet_SocketSet set, TCPsocket sock);
+extern s32b SDLNet_CheckSockets@set_check(SDLNet_SocketSet set, u32b timeout);
+extern void SDLNet_FreeSocketSet@set_free(SDLNet_SocketSet set);
+}
+/** @} */

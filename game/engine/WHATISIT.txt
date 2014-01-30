@@ -1,0 +1,5 @@
+This directory contains the vital core lua files neccesary for
+the T-Engine to properly operate.
+
+It is possible to redefine some of them in a module, but it should not
+be done because next version of the engine might change anything in there.

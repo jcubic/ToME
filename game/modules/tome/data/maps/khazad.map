@@ -1,0 +1,86 @@
+-- The Dwarven City of Khazad-dum
+
+map.define("khazad.map")
+
+map.symbol{ symbol='*' feat=FEAT_MAP_BORDER info=0 }
+
+map.symbol{ symbol='x' feat=FEAT_PERM_INNER info=0 }
+map.symbol{ symbol='X' feat=FEAT_WALL_SOLID info=6 }
+
+map.symbol{ symbol='B' feat=FEAT_PERM_INNER info=3 }
+map.symbol{ symbol='b' feat=FEAT_WALL_SOLID info=3 }
+
+map.symbol{ symbol='.' feat=FEAT_FLOOR info=3 }
+map.symbol{ symbol='-' feat=FEAT_FLOOR info=3 }
+
+-- East Gate Exit
+map.symbol{ symbol='<' feat=FEAT_SHAFT_UP dungeon=DUNGEON_KZD_EAST info=3 }
+-- West Gate Exit
+map.symbol{ symbol='>' feat=FEAT_SHAFT_UP dungeon=DUNGEON_KZD_WEST info=3 }
+
+
+-- Misc Map specific cosmetics
+-- map.symbol{ symbol='=' feat=FEAT_FORGE info=6 }
+map.symbol{ symbol='^' feat=FEAT_SHAL_LAVA info=6 }
+map.symbol{ symbol='O' feat=FEAT_STONE_PILLAR info=3 }
+
+-- Balin, Lord of Moria
+map.symbol{ symbol='L' feat=FEAT_FLOOR info=3 monster=RACE_BALIN }
+
+-- Stores
+map.symbol{ symbol='1' feat=FEAT_SHOP info=3 building=store.STORE_GENERAL }
+map.symbol{ symbol='2' feat=FEAT_SHOP info=3 building=store.STORE_ARMOURY }
+map.symbol{ symbol='3' feat=FEAT_SHOP info=3 building=store.STORE_WEAPONS }
+map.symbol{ symbol='4' feat=FEAT_SHOP info=3 building=store.STORE_TEMPLE }
+map.symbol{ symbol='5' feat=FEAT_SHOP info=3 building=store.STORE_ALCHEMY }
+map.symbol{ symbol='6' feat=FEAT_SHOP info=3 building=store.STORE_MAGIC }
+map.symbol{ symbol='7' feat=FEAT_SHOP info=3 building=store.PUB_DRUNKEN_MARMOT }
+-- map.symbol{ symbol='8' feat=FEAT_SHOP info=3 building=store.STORE_MITHRIL_SMITH }
+
+-- Dungeon layout
+map.map
+{
+[[***********************************************************************************************************************************************************************************]],
+[[*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxBBBBBBBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBBBBB^^^^^BBBBBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBBBB^^^^^^---^^^^^^BBBBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBBB^^^^^-------------^^^^^BBBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBBB^^^^---------------------^^^^BBBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBB^^^^---------------------------^^^^BBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBB^^^---------------------------------^^^BBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBB^^^-----BBBBBB--------------------------^^^BBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBB^^^-------BBBBBB----------------------------^^^BBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBx*]],
+[[*xB............................................................BB^^---------BBB7--------------------------------^^BB............................................................Bx*]],
+[[*xB...BBBBB.........BBBB.........BBB...BBB.......BBBBBB.......BB^^----------BBBB---------------------------------^^BB.....BBBBBBB........BBBBBBB....BBBBB......BBB.....BBBB.....Bx*]],
+[[*xB...BBBBB.........BBBB.........BBB...BBBBB.....BBBBBB......BB^^-------------------------------------------------^^BB....BBBBBBB........BBBBBBB....BBBBB......BBB.....BBBB.....Bx*]],
+[[*xB...BBB...........BBBB.........BBB...BBBBB.....BBBBBB......B^^---------------------------------------------------^^B....BBBBBBB............BBB....BBB........BBB.....BBBB.....Bx*]],
+[[*xB..............................B5B.....B3B................BB^--------------------------L--------------------------^BB.......B2B..............................B6B..............Bx*]],
+[[*xB....O.......O.......O.......O.......O.......O.......O....B^^-----------------------------------------------------^^B....O.......O.......O.......O.......O.......O.......O....Bx*]],
+[[*xB.........................................................B^-------------------------------------------------------^B.........................................................Bx*]],
+[[*xB.........................................................-----------------------------------------------------------.........................................................Bx*]],
+[[*BB.........................................................-----------------------------------------------------------.........................................................BB*]],
+[[*B<.........................................................-----------------------------------------------------------.........................................................>B*]],
+[[*BB.........................................................-----------------------------------------------------------.........................................................BB*]],
+[[*xB.........................................................-----------------------------------------------------------.........................................................Bx*]],
+[[*xB.........................................................B^-------------------------BBBBB-------------------------^B.........................................................Bx*]],
+[[*xB....O.......O.......O.......O.......O.......O.......O....B^-------------------------BBBBB------------------------^^B....O.......O.......O.......O.......O.......O.......O....Bx*]],
+[[*xB...............BBB.....................BB.......BBB......BB^------------------------BBBBB------------------------^BB..................BB....BBB....................B3B.......Bx*]],
+[[*xB........B1B....BBB.....BB2BB...........BB.......BBB.......B^^---------------------------------------------------^^B..........B1B...BBBBB....BBB.....BBBBBB......BBBBBB.......Bx*]],
+[[*xB........BBB....BBB.....BBBBB........BBBBB.......BBB.......BB^^-------------------------------------------------^^BB..........BBB...BBBBB....BBB.....BBBBBB......BBBBBB.......Bx*]],
+[[*xB........BBB............BBBBB........BBBBB..................BB^^-----------------------------------------------^^BB...........BBB............BBB.....BBBBBB......BBBBBB.......Bx*]],
+[[*xB............................................................BB^^---------------------------------------------^^BB............................................................Bx*]],
+[[*xBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBB^^^-----------------------------------------^^^BBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxBB^^^-------------------------------------^^^BBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBB^^^---------------------------------^^^BBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBB^^^^---------------------------^^^^BBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBBB^^^^---------------------^^^^BBBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBBB^^^^^-------------^^^^^BBBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBBBB^^^^^^---^^^^^^BBBBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXBBBBBB^^^^^BBBBBBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx*]],
+[[*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxBBBBBBBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*]],
+[[***********************************************************************************************************************************************************************************]],
+}
+
+-- Starting position
+map.set_player(19, 2)
+

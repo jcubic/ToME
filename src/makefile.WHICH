@@ -1,0 +1,20 @@
+This file documents which makefiles you should use for each system.
+
+ * makefile.std:
+	Most Unix users should use this.
+
+ * makefile.autopackage:
+	This is the makefile used in conjunction with Autopackage packging.
+
+ * makefile.bsd:
+	FreeBSD users will prefer this.
+
+ * makefile.osx:
+	Use this on Mac OS X.  Uses SDL.
+
+ * makefile.devcpp
+	MS Windows users will prefer this, using Dev-C++.  See windows/tome.dev
+	for a project.
+
+ * makefile.cyg:
+	A makefile for people using Cygwin for MS Windows.

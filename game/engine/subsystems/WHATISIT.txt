@@ -1,0 +1,8 @@
+This directory contains various subsystems that are usualy
+needed by a roguelike(like hunger system, eating, quaffing, ...)
+but that still need to be requested by the modules, in case they
+dont want them/make their own.
+
+If a system is called hunger.lua in there, the module just needs to do in
+its init.lua file:
+load_subsystem("hunger")

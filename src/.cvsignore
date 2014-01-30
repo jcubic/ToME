@@ -1,0 +1,11 @@
+angband.res
+makefile
+tome
+tome3
+tolua
+w_*.c
+TOME.EXE
+TOLUA.EXE
+*.app
+*.sparseimage
+*.dmg

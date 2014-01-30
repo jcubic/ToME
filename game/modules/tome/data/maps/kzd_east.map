@@ -1,0 +1,80 @@
+-- Khazad-dum, East Gate
+-- The east gate is besieged by orcs and trolls.
+-- This map relates to QUEST
+-- Once the quest has been completed, this map disappears
+-- from the game, and entering the east gate from the
+-- wilderness map deposits the player directly inside
+-- Khazad-dum
+-- Siege monsters are placed in LEVEL_GENERATE_POST
+
+map.define("kzd_east.map")
+
+map.symbol{ symbol='*' feat=FEAT_MAP_BORDER info=0 }
+map.symbol{ symbol='x' feat=FEAT_PERM_INNER info=0 }
+map.symbol{ symbol='X' feat=FEAT_WALL_SOLID info=0 }
+map.symbol{ symbol='.' feat=FEAT_FLOOR info=6 }
+
+-- To Khazad-dum
+map.symbol{ symbol='>' feat=FEAT_SHAFT_DOWN dungeon=DUNGEON_KHAZAD_DUM info=6 }
+-- Return to wilderness
+map.symbol{ symbol='<' feat=FEAT_SHAFT_UP info=6 }
+
+
+-- Misc terrain
+map.symbol{ symbol='T' feat=FEAT_TREES info=6 }
+map.symbol{ symbol='.' feat=FEAT_FLOOR info=6 }
+map.symbol{ symbol=',' feat=FEAT_DIRT info=6 }
+map.symbol{ symbol=' ' feat=FEAT_DARK_PIT info=6 }
+
+map.symbol{ symbol='+' feat=FEAT_DOOR info=6 }
+
+
+-- Dungeon layout
+map.map
+{
+[[***********************************************]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,T,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,T,,,*]],
+[[*xxXXX...........               ,,,,,,T,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,T,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,T,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,T,,,,T,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,T,,,,,,,T,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,T,,,*]],
+[[*xxXXXX..........               ,,,,T,,,,,,,,,*]],
+[[*xxXXXX..........               ,,,,,,,,,,,,,,*]],
+[[*xxXXXX..........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ..............*]],
+[[*x>..+.......................................<*]],
+[[*xxXXX...........               ..............*]],
+[[*xxXXXX..........               ,,,,,,,,,,,,,,*]],
+[[*xxXXXX..........               ,,,,,,,,,,,,,,*]],
+[[*xxXXXX..........               ,,,,,T,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,T,*]],
+[[*xxXXX...........               ,,,,,,,,T,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,T,,*]],
+[[*xxXXX...........               ,,,T,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,T,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,T,,,*]],
+[[*xxXXX...........               ,,,,T,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,T,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[*xxXXX...........               ,,T,,,,,,,,,T,*]],
+[[*xxXXX...........               ,,,,,T,,,,,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,T,,*]],
+[[*xxXXX...........               ,,T,,,,,,T,,,,*]],
+[[*xxXXX...........               ,,,,,,,,,,,,,,*]],
+[[***********************************************]],
+}
+
+-- Starting position
+map.set_player(20, 45)
+

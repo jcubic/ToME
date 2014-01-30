@@ -1,0 +1,2 @@
+#! /bin/sh
+grep CFBundleVersion mac/Info.plist | perl -pe "s,.*<string>([^<]*)<.*,\\1,"

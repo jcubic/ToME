@@ -1,0 +1,7 @@
+Up and down keys to select a flag
+
+RETURN/ENTER to edit the selected flag
+"k" to toggle whether the flag is known or not
+Delete or "d" to delete a flag
+"a" to add a flag
+"?" to get this message

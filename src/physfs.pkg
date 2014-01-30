@@ -1,0 +1,83 @@
+/* File: physfs.pkg */
+
+/*
+ * Purpose: Lua interface defitions for file system abstraction lib.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+$static cptr lua_my_fgets(PHYSFS_file *fff) { char buf[1024]; bool ret = my_fgets(fff, buf, 1024); return (!ret) ? buf : NULL; }
+
+$extern bool create_zip(cptr zip_path, flags_type *files, cptr signature);
+
+/** @module fs
+ * @note Physfs lib, FS abstraction functions
+ * @{ */
+module fs
+{
+
+/*
+ * Physfs lib, FS abstraction functions
+ */
+extern const char *PHYSFS_getLastError@get_last_error(void);
+extern bool PHYSFS_addToSearchPath@add_to_search_path(const char *newDir, s32b appendToPath=TRUE);
+extern bool PHYSFS_removeFromSearchPath@remove_from_search_path(const char *oldDir);
+extern bool PHYSFS_isDirectory@is_directory(const char *fname);
+extern const char *PHYSFS_getRealDir@get_real_dir(const char *filename);
+extern const char *PHYSFS_getDirSeparator@get_dir_separator(void);
+extern char *PHYSFS_getDependentPath@get_dependent_path(const char *fname);
+extern bool PHYSFS_mkdir@mkdir(const char *dirName);
+extern bool PHYSFS_delete@delete(const char *filename);
+extern bool PHYSFS_rename@rename(const char *filename, const char *new_filename);
+extern const char *PHYSFS_getBaseDir@get_base_dir();
+extern const char *PHYSFS_getUserDir@get_user_dir();
+extern const char *PHYSFS_getWriteDir@get_write_dir();
+extern bool PHYSFS_setWriteDir@set_write_dir(const char *newDir);
+extern s32b PHYSFS_getLastModTime@last_modified(const char *filename);
+extern bool file_exist(char *buf);
+extern char *PHYSFS_specific_mount;
+
+extern PHYSFS_file *my_fopen@open(cptr file, cptr mode);
+extern errr my_fclose@close(PHYSFS_file *fff);
+extern errr my_fputs@write(PHYSFS_file *fff, cptr buf);
+extern errr PHYSFS_write@write_data(PHYSFS_file *fff, cptr buf, s32b obj_size, s32b obj_nb=1);
+extern errr fd_kill@delete(cptr file);
+extern void set_loadsave_stream(PHYSFS_file *f);
+static cptr lua_my_fgets@read(PHYSFS_file *fff);
+
+extern bool create_zip(cptr zip_path, flags_type *files, cptr signature=NULL);
+
+/* Ugly hack, PRIVATE_USER_PATH is a define, but declared here as a variable to bypass a tolua bug */
+extern const cptr PRIVATE_USER_PATH@TOME_USER_PATH;
+}
+/** @} */

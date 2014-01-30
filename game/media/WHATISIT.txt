@@ -1,0 +1,1 @@
+This directory contains the vital font files needed to display the game.

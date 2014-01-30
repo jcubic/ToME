@@ -1,0 +1,549 @@
+# File: Makefile
+
+# This is not a very "nice" Makefile, but it usually works.
+
+##
+## 1. Installation locations and such
+##
+## LIBDIR and BINDIR should be set appropriately for
+## multiuser installations.
+##
+## If you want to keep it private or don't have root privilege
+## required by "make install", set LIBDIR to ./lib/ or an absolute
+## path pointing to your lib directory, and don't run "make install".
+##
+## NOTE: If LIBDIR is set to ./lib/ , you have to cd to parent directory
+## of lib before you start the game.
+##
+
+PREFIX ?= /usr/local
+X11BASE ?= /usr/X11R6
+
+TOMENAME = tome3
+
+# Path where tome.cfg file lurks
+# If not set it will be assumed to be in the same directory as the executable
+# It should be in the same directory containing game/ otherwise
+# tome.cfg needs editing to point to the correct location
+
+LIBDIR=CONFDIR
+
+# Where lib/ and tome.cfg files goes
+#LIBDIR = $(PREFIX)/games/$(TOMENAME)/
+# Sysadmins of commercial Unix and/or BSD might prefer this
+#LIBDIR = $(PREFIX)/share/$(TOMENAME)/
+# Another example: single user installation using absolute path
+#LIBDIR = /home/myloginname/lib/$(TOMENAME)/
+# If none are defined then tome will look for tome.cfg in the same
+# directory as the executable
+
+# Where ToME binary goes
+BINDIR = $(PREFIX)/bin/
+# Another common location
+#BINDIR = $(PREFIX)/games/
+
+# SDL is required now
+SDL_CONFIG ?= sdl-config
+SDLINCLUDES = `$(SDL_CONFIG) --cflags`
+SDLLIBS = `$(SDL_CONFIG) --libs` -lSDL_net -lSDL_mixer
+
+# Ignore this if you're not making a package
+DESTDIR=
+
+##
+## 2. Some "system" definitions
+##
+## No changes are needed to compile a version that will run on both
+## X11 and Curses, in debugging mode, with maximal warnings, on many
+## normal Unix machines of the Sun OS variety (non-solaris).
+##
+## To use an "alternative" definition, simply "modify" (or "replace")
+## the definition below with one that you like.  For example, you can
+## change the compiler to "cc", or remove the "debugging" options, or
+## remove the X11 or Curses support, etc, as desired.
+##
+## See also "config.h" and "h-config.h" for important information.
+##
+## Some "examples" are given below, they can be used by simply
+## removing the FIRST column of "#" signs from the "block" of lines
+## you wish to use, and commenting out "standard" block below.
+##
+## This is not intended to be a "good" Makefile, just a "simple" one.
+##
+
+
+#
+# This is my compiler of choice, it seems to work most everywhere
+#
+CC = apgcc
+
+#
+# Standard version (see main-x11.c and main-gcu.c)
+#
+# This version supports both "X11" and "curses" in a single executable.
+#
+# You may have to add various X11 include/library directories to the
+# "INCLUDES", if your machine places files in a weird location
+# (e.g. -I/usr/X11R6/include, as is almost always the case with
+# linux and *BSD). Since we have seen many linux users -- arguably
+# the largest unix population -- confused by this, and adding this
+# usually doesn't hurt, the default rule has been changed to search
+# for /usr/X11R6/include.
+#
+# You may be able to remove "-ltermcap" on some machines (ex: Solaris).
+#
+# You may have to replace "-lcurses" with "-lncurses" to use the
+# "new curses" library instead of the "old curses" library, and
+# you may have to add "-I/usr/include/ncurses" to the "INCLUDES",
+# and/or "-DUSE_NCURSES" to "DEFINES".
+#
+# See "main-gcu.c" and "config.h" for some optional "curses" defines,
+# including "USE_GETCH" and "USE_CURS_SET".  Note that "config.h" will
+# attempt to "guess" at many of these flags based on your system.
+#
+COPTS = -Wall -O1 -pipe -g
+INCLUDES = -I$(X11BASE)/include
+DEFINES = -DUSE_X11 \
+	-DUSE_GCU \
+	-DUSE_EGO_GRAPHICS \
+	-DUSE_TRANSPARENCY \
+	-DSUPPORT_GAMMA \
+	-DUSE_PRECISE_CMOVIE \
+	-DUSE_UNIXSOCK
+LIBS = -lcurses -L$(X11BASE)/lib -lX11
+
+
+##
+## Variation -- Use "main-sdl.c" instead of "main-x11.c"
+##
+#COPTS = -Wall -g
+#INCLUDES =
+#DEFINES = -DUSE_SDL \
+#	-DUSE_EGO_GRAPHICS \
+#	-DUSE_TRANSPARENCY \
+#	-DSUPPORT_GAMMA \
+#	-DUSE_PRECISE_CMOVIE \
+#	-DUSE_UNIXSOCK
+#LIBS = -lSDL_image -lSDL_ttf -lSDL_gfx
+
+
+##
+## Variation -- Only support "main-gtk.c" (not "main-gcu.c, main-x11.c")
+##
+#COPTS = -Wall -O1 -pipe -g
+#INCLUDES = `gtk-config --cflags`
+#DEFINES = -DUSE_GTK -DUSE_TRANSPARENCY -DUSE_EGO_GRAPHICS -DSUPPORT_GAMMA
+#LIBS = `gtk-config --libs`
+
+
+#
+# Variation -- Only support "main-x11.c" (not "main-gcu.c")
+#
+#COPTS = -Wall -O1 -pipe -g
+#INCLUDES = -I$(X11BASE)/include
+#DEFINES = -DUSE_X11 -DUSE_TRANSPARENCY -DUSE_EGO_GRAPHICS -DSUPPORT_GAMMA
+#LIBS = -lX11 -L$(X11BASE)/lib
+
+
+##
+## Variation -- Only support "main-gcu.c" (not "main-x11.c")
+##
+#COPTS = -Wall -O1 -pipe -g
+#INCLUDES =
+#DEFINES = -DUSE_GCU
+#LIBS = -lcurses -ltermcap
+
+
+##
+## Variation -- Use "main-cap.c" instead of "main-gcu.c"
+##
+#COPTS = -Wall -O1 -pipe -g
+#INCLUDES = -I$(X11BASE)/include
+#DEFINES = -DUSE_X11 -DUSE_CAP \
+#	-DUSE_TRANSPARENCY -DUSE_EGO_GRAPHICS -DSUPPORT_GAMMA
+#LIBS = -lX11 -ltermcap -L$(X11BASE)/lib
+
+
+##
+## Variation -- Only work on simple vt100 terminals
+##
+#COPTS = -Wall -O1 -pipe -g
+#INCLUDES =
+#DEFINES = -DUSE_CAP -DUSE_HARDCODE
+
+
+##
+## Variation -- this might work for Linux 1.1.93 using ncurses-1.8.7.
+##
+#COPTS = -Wall -O2 -fomit-frame-pointer -m486
+#INCLUDES = -I$(X11BASE)/include -I/usr/include/ncurses
+#DEFINES = -DUSE_X11 -DUSE_GCU \
+#	-DUSE_TRANSPARENCY -DUSE_EGO_GRAPHICS -DSUPPORT_GAMMA
+#LIBS = -lX11 -lncurses -L$(X11BASE)/lib
+
+
+##
+## Variation -- this might work better than the suggestion above
+##
+#COPTS = -Wall -O2 -fomit-frame-pointer
+#INCLUDES = -I$(X11BASE)/include -I/usr/include/ncurses
+#DEFINES = -DUSE_X11 -DUSE_GCU -DUSE_TPOSIX -DUSE_CURS_SET \
+#	-DUSE_TRANSPARENCY -DUSE_EGO_GRAPHICS -DSUPPORT_GAMMA
+#LIBS = -lX11 -lncurses -L$(X11BASE)/lib
+#LDFLAGS = -s
+
+
+##
+## Variation -- compile for FreeBSD with ncurses
+## -- BSD curses gives you B&W display.
+##
+#COPTS = -Wall -O2 -fomit-frame-pointer -m486
+#INCLUDES = -I$(X11BASE)/include
+#DEFINES = -DUSE_X11 -DUSE_GCU -DUSE_NCURSES \
+#	-DUSE_TRANSPARENCY -DUSE_EGO_GRAPHICS -DSUPPORT_GAMMA
+#LIBS = -lX11 -lncurses -L$(X11BASE)/lib
+
+
+
+### End of configurable section ###
+
+#
+# Physfs(FS abstraction lib)
+#
+TOMEINCLUDES += -Iphysfs -Iphysfs/zlib114
+DEFINES += -DPHYSFS_NO_CDROM_SUPPORT -DPHYSFS_SUPPORTS_ZIP
+PHYSFSOBJS += \
+	io.o \
+	physfs/archiver/dir.o \
+	physfs/archiver/zip.o \
+	physfs/physfs.o \
+	physfs/physfs_byteorder.o \
+	physfs/physfsrwops.o \
+	physfs/platform/posix.o \
+	physfs/platform/unix.o \
+	physfs/zlib114/adler32.o \
+	physfs/zlib114/compress.o \
+	physfs/zlib114/crc32.o \
+	physfs/zlib114/deflate.o \
+	physfs/zlib114/infblock.o \
+	physfs/zlib114/infcodes.o \
+	physfs/zlib114/inffast.o \
+	physfs/zlib114/inflate.o \
+	physfs/zlib114/inftrees.o \
+	physfs/zlib114/infutil.o \
+	physfs/zlib114/gzio.o \
+	physfs/zlib114/trees.o \
+	physfs/zlib114/uncompr.o \
+	physfs/zlib114/zutil.o
+
+#
+# Lua support
+#
+
+TOMEINCLUDES += -Ilua -I.
+DEFINES += -DUSE_LUA -DLUA_ERROR_TO_TERMINAL
+
+LUAOBJS = \
+	lua_bind.o \
+	script.o \
+	w_dun.o \
+	w_fs.o \
+	w_mnster.o \
+	w_net.o \
+	w_obj.o \
+	w_play_c.o \
+	w_player.o \
+	w_quest.o \
+	w_sound.o \
+	w_spells.o \
+	w_util.o \
+	w_z_pack.o \
+	lua/luac.o
+
+TOLUAOBJS = \
+	z-form.o \
+	z-util.o \
+	z-virt.o \
+	lua/lapi.o \
+	lua/lauxlib.o \
+	lua/lbaselib.o \
+	lua/lcode.o \
+	lua/ldblib.o \
+	lua/ldebug.o \
+	lua/ldo.o \
+	lua/lfunc.o \
+	lua/lgc.o \
+	lua/liolib.o \
+	lua/llex.o \
+	lua/lmem.o \
+	lua/lobject.o \
+	lua/lparser.o \
+	lua/lstate.o \
+	lua/lstring.o \
+	lua/lstrlib.o \
+	lua/ltable.o \
+	lua/ltests.o \
+	lua/ltm.o \
+	lua/lundump.o \
+	lua/lvm.o \
+	lua/lzio.o \
+	lua/tolua_bd.o \
+	lua/tolua_eh.o \
+	lua/tolua_gp.o \
+	lua/tolua_lb.o \
+	lua/tolua_rg.o \
+	lua/tolua_tm.o \
+	lua/tolua_tt.o
+
+TOLUA  = ./tolua
+
+TOLUADEP = $(PHYSFSOBJS) $(TOLUAOBJS) lua/tolua.o lua/tolualua.o
+
+#
+# The C part of the T-Engine itself
+#
+
+#
+# If tome.cfg path is forced, well .. force it
+DEFINES += `sh -c 'if test -n "$(LIBDIR)"; then echo -DFORCE_TOME_CFG_PATH=\"$(LIBDIR)\"; fi'`
+DEFINES += -DFORCE_TOME_CFG_BINRELOC -DENABLE_BINRELOC -DAUTOPACKAGE -DBR_PTHREADS=0
+
+TOMEOBJS = \
+	prefix.o \
+	birth.o \
+	cache.o \
+	cave.o \
+	cmd1.o \
+	cmd2.o \
+	cmd3.o \
+	cmd4.o \
+	cmd5.o \
+	cmd6.o \
+	cmd7.o \
+	cmovie.o \
+	dungeon.o \
+	files.o \
+	flags.o \
+	gen_evol.o \
+	gen_maze.o \
+	generate.o \
+	ghost.o \
+	gods.o \
+	help.o \
+	init1.o \
+	init2.o \
+	levels.o \
+	loadsave.o \
+	main-cap.o \
+	main-gcu.o \
+	main-gtk.o \
+	main-gtk2.o \
+	main-sdl.o \
+	main-sla.o \
+	main-win.o \
+	main-x11.o \
+	main.o \
+	melee1.o \
+	melee2.o \
+	modules.o \
+	monster1.o \
+	monster2.o \
+	monster3.o \
+	music.o \
+	net.o \
+	notes.o \
+	object1.o \
+	object2.o \
+	object3.o \
+	pathfind.o \
+	plots.o \
+	powers.o \
+	randart.o \
+	sdl-events.o \
+	sdl-glyph.o \
+	sdl-log.o \
+	sdl-utility.o \
+	SFMT.o \
+	skills.o \
+	speed.o \
+	spells1.o \
+	spells2.o \
+	squeltch.o \
+	store.o \
+	tables.o \
+	traps.o \
+	util.o \
+	variable.o \
+	vector.o \
+	wild.o \
+	wizard1.o \
+	wizard2.o \
+	xtra1.o \
+	xtra2.o \
+	z-rand.o \
+	z-term.o \
+	physfs/zlib114/ioapi.o \
+	physfs/zlib114/zip.o
+
+#
+# Compiler options
+#
+
+CFLAGS = $(TOMEINCLUDES) $(SDLINCLUDES) $(COPTS) $(INCLUDES) $(DEFINES)
+
+ALLLIBS = $(TOMELIBS) $(SDLLIBS) $(LIBS)
+
+
+#
+# Build the binary. The new base target.
+#
+
+TARGET = $(TOMENAME)
+
+default: $(TARGET)
+	@echo "*** Note: In order to use the install rule, which now actually"
+	@echo "*** handles the installation of the game dir, you need to edit"
+	@echo "*** this makefile, going to the top and making sure LIBDIR suits"
+	@echo "*** your desired install dir properly. The LIBRARY_DIR you used"
+	@echo "*** to set in config.h is now ignored and obsolete with respect"
+	@echo "*** to this makefile. Note that if you edit this makefile, you may"
+	@echo "*** need to recompile so all the files that reference those defines"
+	@echo "*** notice the changes."
+
+$(TOLUA): $(TOLUADEP)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(TOLUADEP) $(ALLLIBS)
+
+TARGETDEP = $(TOMEOBJS) $(PHYSFSOBJS) $(LUAOBJS) $(TOLUAOBJS)
+
+$(TARGET): $(TARGETDEP)
+	$(CC) $(LDFLAGS) -o $@ $(TARGETDEP) $(ALLLIBS)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+#
+# An install rule.
+#
+mini_install: default
+	cp -f $(TARGET) ..
+
+install: default
+	umask 022 ;\
+	[ -d $(DESTDIR)$(LIBDIR) ] || mkdir -p $(DESTDIR)$(LIBDIR) ;\
+	[ -d $(DESTDIR)$(BINDIR) ] || mkdir -p $(DESTDIR)$(BINDIR) ;\
+	cp -f ../tome.cfg $(DESTDIR)$(LIBDIR) ;\
+	cp -r ../game $(DESTDIR)$(LIBDIR) ;\
+	cp -f $(TARGET) $(DESTDIR)$(BINDIR)$(TARGET)
+
+#
+# Housekeeping
+#
+
+ALLOBJS = $(TOMEOBJS) $(TOLUADEP) $(LUAOBJS)
+ALLSRCS = `echo $(ALLOBJS) | sed 's/\.o/.c/g'`
+
+clean:
+	rm -f *.bak w_*.c $(ALLOBJS) $(TOLUA) $(TARGET) tome
+
+# Make a src dist
+TARGET_VERSION=`cat /tmp/tome-release-version | sed 's/\T-Engine \(.\).\(.\).\(.[^ ]*\).*/\1\2\3/g'`
+DIST_TARGET_VERSION=../dist/tome-$(TARGET_VERSION)-src
+DIST_TARGET_VERSION_NO_PREFIX=tome-$(TARGET_VERSION)-src
+DIST_TARGET=../dist/tome-xxx-src
+dist: clean
+	rm -rf $(DIST_TARGET)
+	mkdir -p $(DIST_TARGET)
+	cp -r ../game $(DIST_TARGET)
+	cp -r ../src $(DIST_TARGET)
+	rm -f $(DIST_TARGET)/src/tome3
+	rm -f $(DIST_TARGET)/src/tolua
+	../tome3 -MToME --lua-exec "__CHANGELOG_RELEASE_MODE__='$(DIST_TARGET)'" > /tmp/tome-release-version
+	cp ../changes.old $(DIST_TARGET)
+	cp ../credits.txt $(DIST_TARGET)
+	cp ../tome.cfg $(DIST_TARGET)
+	find $(DIST_TARGET) -name '*~' -exec rm {} \;
+	find $(DIST_TARGET)/game/media/font/ -name '*.hex' -exec rm {} \;
+	rm -rf `find $(DIST_TARGET)/game/addons/ -mindepth 1 -maxdepth 1 -type d`
+	rm -rf `find $(DIST_TARGET)/game/modules/ -mindepth 1 -maxdepth 1 -type d`
+	rm -rf `find $(DIST_TARGET)/game/packs/ -mindepth 1 -maxdepth 1 -type d`
+	rm -rf `find $(DIST_TARGET)/game/addons/ -mindepth 1 -maxdepth 1 -type l`
+	rm -rf `find $(DIST_TARGET)/game/modules/ -mindepth 1 -maxdepth 1 -type l`
+	rm -rf `find $(DIST_TARGET)/game/packs/ -mindepth 1 -maxdepth 1 -type l`
+	if test "$(PACK_MODULE)"; then pushd ../game/modules; echo ===Embedding module $(PACK_MODULE); cp -r $(PACK_MODULE) ../$(DIST_TARGET)/game/modules/; popd; fi
+	if test "$(PACK_ADDON)"; then pushd ../game/addons; echo ===Embedding addon $(PACK_ADDON); cp -r $(PACK_ADDON) ../$(DIST_TARGET)/game/addons/; popd; fi
+	find $(DIST_TARGET) -name '*~' -exec rm {} \;
+	rm -rf `find $(DIST_TARGET) -name 'CVS'`
+	mv $(DIST_TARGET) $(DIST_TARGET_VERSION)
+	tar -cvjf $(DIST_TARGET_VERSION).tar.bz2 -C ../dist/ $(DIST_TARGET_VERSION_NO_PREFIX)
+
+# Make a src dist
+DIST_TARGET_LINUX=$(BUILD_ROOT)
+dist_linux: clean mini_install
+	mkdir -p $(DIST_TARGET_LINUX)
+	cp ../$(TARGET) $(DIST_TARGET_LINUX)
+	strip -s $(DIST_TARGET_LINUX)/tome3
+	cp -r ../game $(DIST_TARGET_LINUX)
+	cp ../changes.old $(DIST_TARGET_LINUX)
+	cp ../credits.txt $(DIST_TARGET_LINUX)
+	cp ../tome.cfg $(DIST_TARGET_LINUX)
+	find $(DIST_TARGET_LINUX) -name '*~' -exec rm {} \;
+	find $(DIST_TARGET_LINUX)/game/media/font/ -name '*.hex' -exec rm {} \;
+	rm -rf `find $(DIST_TARGET_LINUX)/game/addons/ -mindepth 1 -maxdepth 1 -type d`
+	rm -rf `find $(DIST_TARGET_LINUX)/game/modules/ -mindepth 1 -maxdepth 1 -type d`
+	rm -rf `find $(DIST_TARGET_LINUX)/game/packs/ -mindepth 1 -maxdepth 1 -type d`
+	rm -rf `find $(DIST_TARGET_LINUX)/game/addons/ -mindepth 1 -maxdepth 1 -type l`
+	rm -rf `find $(DIST_TARGET_LINUX)/game/modules/ -mindepth 1 -maxdepth 1 -type l`
+	rm -rf `find $(DIST_TARGET_LINUX)/game/packs/ -mindepth 1 -maxdepth 1 -type l`
+	if test "$(PACK_MODULE)"; then pushd ../game/modules; echo ===Embedding module $(PACK_MODULE); cp -r $(PACK_MODULE) $(DIST_TARGET_LINUX)/game/modules/; popd; fi
+	if test "$(PACK_ADDON)"; then pushd ../game/addons; echo ===Embedding addon $(PACK_ADDON); cp -r $(PACK_ADDON) $(DIST_TARGET_LINUX)/game/addons/; popd; fi
+	find $(DIST_TARGET_LINUX) -name '*~' -exec rm {} \;
+	rm -rf `find $(DIST_TARGET_LINUX) -name 'CVS'`
+
+depend:
+	makedepend -f makefile.std $(INCLUDES) $(DEFINES) -D__MAKEDEPEND__ $(ALLSRCS)
+
+#
+# Lua library compilation rules
+#
+
+w_dun.c: dungeon.pkg $(TOLUA)
+	$(TOLUA) -n dungeon -o w_dun.c dungeon.pkg
+
+w_fs.c: physfs.pkg $(TOLUA)
+	$(TOLUA) -n physfs -o w_fs.c physfs.pkg
+
+w_mnster.c: monster.pkg $(TOLUA)
+	$(TOLUA) -n monster -o w_mnster.c monster.pkg
+
+w_net.c: net.pkg $(TOLUA)
+	$(TOLUA) -n net -o w_net.c net.pkg
+
+w_obj.c: object.pkg $(TOLUA)
+	$(TOLUA) -n object -o w_obj.c object.pkg
+
+w_play_c.c: player_c.pkg $(TOLUA)
+	$(TOLUA) -n player_c -o w_play_c.c player_c.pkg
+
+w_player.c: player.pkg $(TOLUA)
+	$(TOLUA) -n player -o w_player.c player.pkg
+
+w_quest.c: quest.pkg $(TOLUA)
+	$(TOLUA) -n quest -o w_quest.c quest.pkg
+
+w_sound.c: sound.pkg $(TOLUA)
+	$(TOLUA) -n sound -o w_sound.c sound.pkg
+
+w_spells.c: spells.pkg $(TOLUA)
+	$(TOLUA) -n spells -o w_spells.c spells.pkg
+
+w_util.c: util.pkg $(TOLUA)
+	$(TOLUA) -n util -o w_util.c util.pkg
+
+w_z_pack.c: z_pack.pkg $(TOLUA)
+	$(TOLUA) -n z_pack -o w_z_pack.c z_pack.pkg
+
+# Uncomment if you have gel(and need to rebuild the cache generator)
+#cache.c: cache.ls
+#	gel -f lua/convert.gema cache.ls cache.c
+
+# DO NOT DELETE THIS LINE - make depend depends on it.

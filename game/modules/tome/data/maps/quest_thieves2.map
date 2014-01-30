@@ -1,0 +1,77 @@
+map.define("quest_thieves2.map")
+
+-- Floor
+map.symbol{ symbol='.' feat=FEAT_FLOOR info=CAVE_GLOW }
+
+-- Dark floor
+map.symbol{ symbol=',' feat=FEAT_FLOOR info=CAVE_GLOW }
+
+-- Alarm
+map.symbol{
+	symbol='&' feat=FEAT_FLOOR info=CAVE_GLOW
+	flags = {
+		MOVE_POST_DEST = __thieves_ring_alarm
+    }
+}
+
+-- Permanent wall
+map.symbol{ symbol='X' feat=FEAT_PERM_INNER info=CAVE_GLOW }
+
+-- Lit permanent wall
+map.symbol{ symbol='x' feat=FEAT_PERM_INNER info=CAVE_GLOW }
+
+-- Magically looked door
+map.symbol{ symbol='M' feat=FEAT_DOOR_LOCKED_HEAD+6 info=CAVE_GLOW }
+
+-- Looked door
+map.symbol{ symbol='D' feat=FEAT_DOOR_LOCKED_HEAD+6 info=CAVE_GLOW }
+
+-- Open door
+map.symbol{ symbol='d' feat=FEAT_OPEN info=CAVE_GLOW }
+
+-- down staircase
+map.symbol{ symbol='>' feat=FEAT_MORE info=CAVE_GLOW trap=map.ANY }
+
+-- Floor with Novice rogue
+map.symbol{ symbol='a' feat=FEAT_FLOOR info=CAVE_GLOW monster=RACE_THIEVES_GUILD_ROGUE }
+
+-- Floor with Bandit
+map.symbol{ symbol='b' feat=FEAT_FLOOR info=CAVE_GLOW monster=RACE_THIEVES_GUILD_BANDIT }
+
+-- Floor with novice warrior
+map.symbol{ symbol='c' feat=FEAT_FLOOR info=CAVE_GLOW monster=RACE_THIEVES_GUILD_GUARD }
+
+-- Floor with novice mage
+map.symbol{ symbol='e' feat=FEAT_FLOOR info=CAVE_GLOW monster=RACE_THIEVES_GUILD_CONJURER }
+
+-- Dark floor with novice warrior
+map.symbol{ symbol='f' feat=FEAT_FLOOR info=CAVE_GLOW monster=RACE_THIEVES_GUILD_GUARD }
+
+-- Dungeon layout
+map.map
+{
+[[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]],
+[[x.....x.....x.....x.............x]],
+[[x.....x.....x.....x.............x]],
+[[x.....x.....x.....x.............x]],
+[[xxxMxxxxxdxxxxxdxxxxxxxxxDxxxxxxx]],
+[[XXx..........................xXXX]],
+[[XXx.xxxxx.xxxxx.xxxxxxxxx.xx,xXXX]],
+[[XXxxxXXXxxxXXXxxxXXXXXXXxxx,,,XXX]],
+[[XXXXxxxxxxxxxxxxxxxxxXXXXX,,,,,XX]],
+[[XXXXxe..xb..xa..x...xXXXX,,,,,,,X]],
+[[XXXXx...x...x...x.a.xXXXX,,,,,,,X]],
+[[xxxxxxDxxxDxxxDxxxDxxXXXXX,,,,,XX]],
+[[x,,,x...............xXXXXXX,,,XXX]],
+[[x,,,x..x.........x..xXXXXXXX,XXXX]],
+[[x,,,D.....x...x.....D&,,,,,,,XXXX]],
+[[x,,,x..x.........x..xXXXXXXXXXXXX]],
+[[x,,,x...............xXXXXXXXXXXXX]],
+[[x,,,xxDxxxDxxxDxxxDxxXXXXXXXXXXXX]],
+[[x,,,x...x...x.a.xa..xXXXXXXXXXXXX]],
+[[xf>fx...x.a.x...x...xXXXXXXXXXXXX]],
+[[xxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXX]],
+}
+
+-- Starting position
+map.set_player(2, 3)

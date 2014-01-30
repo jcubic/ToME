@@ -1,0 +1,414 @@
+/* File: z_pack.pkg */
+
+/*
+ * Purpose: Lua interface defitions for z-*.c
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+/** @name Terminal actions
+ * @{ */
+/** @def TERM_XTRA_EVENT
+ * @note Process some pending events
+ */
+#define TERM_XTRA_EVENT	1
+/** @def TERM_XTRA_FLUSH
+ * @note Flush all pending events
+ */
+#define TERM_XTRA_FLUSH 2
+/** @def TERM_XTRA_CLEAR
+ * @note Clear the entire window
+ */
+#define TERM_XTRA_CLEAR 3
+/** @def TERM_XTRA_SHAPE
+ * @note Set cursor shape (optional)
+ */
+#define TERM_XTRA_SHAPE 4
+/** @def TERM_XTRA_FROSH
+ * @note Flush one row (optional)
+ */
+#define TERM_XTRA_FROSH 5
+/** @def TERM_XTRA_FRESH
+ * @note Flush all rows (optional)
+ */
+#define TERM_XTRA_FRESH 6
+/** @def TERM_XTRA_NOISE
+ * @note Make a noise (optional)
+ */
+#define TERM_XTRA_NOISE 7
+/** @def TERM_XTRA_SOUND
+ * @note Make a sound (optional)
+ */
+#define TERM_XTRA_SOUND 8
+/** @def TERM_XTRA_BORED
+ * @note Handle stuff when bored (optional)
+ */
+#define TERM_XTRA_BORED 9
+/** @def TERM_XTRA_REACT
+ * @note React to global changes (optional)
+ */
+#define TERM_XTRA_REACT 10
+/** @def TERM_XTRA_ALIVE
+ * @note Change the "hard" level (optional)
+ */
+#define TERM_XTRA_ALIVE 11
+/** @def TERM_XTRA_LEVEL
+ * @note Change the "soft" level (optional)
+ */
+#define TERM_XTRA_LEVEL 12
+/** @def TERM_XTRA_DELAY
+ * @note Delay some milliseconds (optional)
+ */
+#define TERM_XTRA_DELAY 13
+/** @def TERM_XTRA_GET_DELAY
+ * @note Get the current time in milliseconds (optional)
+ */
+#define TERM_XTRA_GET_DELAY 14
+
+#define TERM_XTRA_EFFECTS_DELAY 31
+/** @def TERM_XTRA_EFFECTS_DELAY
+ * @note Delay some milliseconds (optional)
+ */
+/** @} */
+
+
+
+$static s32b get_current_window() { s32b i; for (i = 0; i < ANGBAND_TERM_MAX; i++) if (angband_term[i] == Term) return i; return 0; }
+$static bool set_current_window(s32b i) { if (angband_term[i]) { Term_activate(angband_term[i]); return TRUE; } else return FALSE; }
+$static flags_type *window_settings(s32b i) { return &window_flag[i]; }
+
+module term
+{
+static s32b get_current_window();
+static bool set_current_window(s32b i);
+static flags_type *window_settings(s32b i);
+#define ANGBAND_TERM_MAX@MAX_WINDOW
+
+/** @var Term_xtra_long
+ * @brief Number
+ */
+extern long Term_xtra_long;
+
+/** @fn xtra(s32b n, s32b v)
+ * @brief Generic function to perform system dependant terminal actions.
+ * @param n Number \n a terminal action (see TERM_XTRA fields).
+ * @brief Terminal action
+ * @param v Number \n variable depending on the terminal action.
+ * @brief Variable
+ * @return Number \n Result of the terminal action.
+ * @note
+ * The "Term->xtra_hook" hook provides a variety of different functions,
+ * based on the first parameter (which should be taken from the various
+ * TERM_XTRA_* defines) and the second parameter (which may make sense
+ * only for some first parameters).  It is available to the program via
+ * the "Term_xtra()" function, though some first parameters are only
+ * "legal" when called from inside this package.
+ * @note (see file z-term.c)
+ */
+extern errr Term_xtra@xtra(s32b n, s32b v);
+
+/** @fn set_cursor(s32b v)
+ * @brief Set the cursor visibility.
+ * @param v Number \n v is the visibility.
+ * @brief Visibility
+ * @return Number \n 1 if visibility was unchanged, otherwise 0.
+ * @note
+ * Cursor visibility (field "cv") is defined as a boolean, so take care what
+ * value is assigned to "v".
+ * @note (see file z-term.c)
+ */
+extern errr Term_set_cursor@set_cursor(s32b v);
+
+/** @fn gotoxy(s32b x, s32b y)
+ * @brief Place the cursor at a given location.
+ * @param x Number \n x-coordinate of target location.
+ * @brief X-coordinate
+ * @param y Number \n y-coordinate of target location.
+ * @brief Y-coordinate
+ * @return Number \n -1 if cursor could not be placed at given location,
+ * otherwise 0.
+ * @note
+ * Note -- "illegal" requests do not move the cursor.
+ * The cursor is flagged as useful if it placed okay.
+ * @note (see file z-term.c)
+ */
+extern void move_cursor@gotoxy(s32b y, s32b x);
+
+/** @fn putch(s32b x, s32b y, byte a, char c)
+ * @brief Move to a location and, using an attr, add a char.
+ * @param x Number \n x-coordinate of target location.
+ * @brief X-coordinate
+ * @param y Number \n y-coordinate of target location.
+ * @brief Y-coordinate
+ * @param a Number \n attribute of character.
+ * @brief Attribute
+ * @param c String \n the character.
+ * @brief Character
+ * @return Number \n <0 if error, 0 if success, 1 if success but cursor is
+ * useless.
+ * @note
+ * We return "-2" if the character is "illegal". XXX XXX
+ * We return "-1" if the cursor is currently unusable.
+ * We queue the given attr/char for display at the current
+ * cursor location, and advance the cursor to the right,
+ * marking it as unuable and returning "1" if it leaves
+ * the screen, and otherwise returning "0".
+ * So when this function returns a positive value, future calls to this
+ * function will return negative ones.
+ * @note (see file z-term.c)
+ */
+extern errr Term_putch@putch(s32b x, s32b y, byte a, char c);
+
+/** @fn putstr(s32b x, s32b y, s32b n, byte a, cptr s)
+ * @brief Move to a location and, using an attr, add a string.
+ * @param x Number \n x-coordinate of target location.
+ * @brief X-coordinate
+ * @param y Number \n y-coordinate of target location.
+ * @brief Y-coordinate
+ * @param n Number \n length of string.
+ * @brief Length
+ * @param a Number \n attribute of string.
+ * @brief Attribute
+ * @param s String \n the string.
+ * @brief String
+ * @return Number \n <0 if error, 0 if success, 1 if success but cursor is
+ * useless.
+ * @note
+ * For length "n", using negative values to imply the largest possible value,
+ * and then we use the minimum of this length and the "actual" length of the
+ * string as the actual number of characters to attempt to display, never
+ * displaying more characters than will actually fit, since we do NOT attempt
+ * to "wrap" the cursor at the screen edge.
+ * We return "-1" if the cursor is currently unusable.
+ * We return "N" if we were "only" able to write "N" chars, even if all of the
+ * given characters fit on the screen, and mark the cursor as unusable for
+ * future attempts.
+ * So when this function, returns a positive value, future calls to this
+ * function will return negative ones.
+ * @note (see file z-term.c)
+ */
+extern errr Term_putstr@putstr(s32b x, s32b y, s32b n, byte a, cptr s);
+
+/** @fn clear(void)
+ * @brief Clear the entire window, and move to the top left corner.
+ * @return Number \n 0 (always).
+ * @note
+ * Note the use of the special "total_erase" code
+ * @note (see file z-term.c)
+ */
+extern errr Term_clear@clear(void);
+
+/** @fn redraw(void)
+ * @brief Redraw (and refresh) the whole window.
+ * @return Number \n 0 (always).
+ * @note (see file z-term.c)
+ */
+extern errr Term_redraw@redraw(void);
+
+/** @fn redraw_section(s32b x1, s32b y1, s32b x2, s32b y2)
+ * @brief Redraw part of a window.
+ * @param x1 Number \n x-coordinate of top-left location.
+ * @brief X-coordinate (top left)
+ * @param y1 Number \n y-coordinate of top-left location.
+ * @brief Y-coordinate (top left)
+ * @param x2 Number \n x-coordinate of bottom-right location.
+ * @brief X-coordinate (bottom right)
+ * @param y2 Number \n y-coordinate of bottom-right location.
+ * @brief Y-coordinate (bottom right)
+ * @return Number \n 0 (always).
+ * @note (see file z-term.c)
+ */
+extern errr Term_redraw_section@redraw_section(s32b x1, s32b y1, s32b x2, s32b y2);
+
+/** @fn get_size(s32b *w=0, s32b *h=0)
+ * @brief Extract the current window size.
+ * @return Number \n 0 (always).
+ * @return *w Number \n The width of the screen (in characters).
+ * @return *h Number \n The height of the screen (in characters).
+ * @note (see file z-term.c)
+ */
+extern errr Term_get_size@get_size(s32b *w=0, s32b *h=0);
+
+/** @fn fresh()
+ * @brief Refresh the screen
+ * @return Number \n 0 for no error
+ * @note (see file z-term.c)
+ */
+extern errr Term_fresh@fresh();
+
+/** @fn addstr(s32b n, byte a, cptr s)
+ * @brief Add a string to the current position on the terminal.
+ * @param n Number \n length to use, -1 to use as much a possible
+ * @brief Length
+ * @param a Byte \n Color/attribute.
+ * @brief Color
+ * @param s Cptr \n String to print
+ * @brief String
+ * @return Number \n -1 if cursor is unavailable, otherwise the
+ * number of characters actually added to the screen.
+ */
+extern errr Term_addstr@addstr(s32b n, byte a, cptr s);
+
+/** @fn erase(s32b x, s32b y, s32b n)
+ * @brief Go to (x,y) and blank out n characters.
+ * @param x Number \n the X coordinate
+ * @biref X
+ * @param y Number \n the Y coordinate
+ * @brief Y
+ * @param n Number \n the number of characters to blank
+ * @brief Length
+ */
+extern errr Term_erase@erase(s32b x, s32b y, s32b n);
+
+}
+
+/*
+ * random numbers
+ */
+$static s32b lua_rand_int(s32b m) {return rand_int(m);}
+
+/*
+ * Generates a random long integer X where A<=X<=B
+ * The integer X falls along a uniform distribution.
+ * Note: rand_range(0,N-1) == rand_int(N)
+ */
+$static s32b lua_rand_range(s32b A, s32b B) {return ((A) + (rand_int(1+(B)-(A))));}
+/*
+ * Generate a random long integer X where A-D<=X<=A+D
+ * The integer X falls along a uniform distribution.
+ * Note: rand_spread(A,D) == rand_range(A-D,A+D)
+ */
+$static s32b lua_rand_spread(s32b A, s32b D) {return ((A) + (rand_int(1+(D)+(D))) - (D));}
+
+/*
+ * Evaluate to TRUE "P" percent of the time
+ */
+$static bool lua_magik(s32b P) {return (rand_int(100) < (P));}
+
+/** @module rng
+ * @brief Random Number Generator(or God)
+ */
+module rng
+{
+/** @fn number(s32b m);
+ * @brief Generate a random integer between 0 and (m - 1).
+ * @param m Number \n maximum value of random integer. The random integer
+ * will be less than "m".
+ * @brief Maximum
+ * @return Number \n The random number.
+ * @note (see file w_z_pack.c)
+ */
+static s32b lua_rand_int @ number(s32b m);
+
+/** @fn  range(s32b A, s32b B);
+ * @brief Generate a random integer between A and B inclusive.
+ * @param A Number \n minimum number.
+ * @brief Minimum
+ * @param B Number \n maximum number.
+ * @brief Maximum
+ * @return Number \n The random number.
+ * @note (see file w_z_pack.c)
+ */
+static s32b lua_rand_range @ range(s32b A, s32b B);
+
+/** @fn  spread(s32b A, s32b D);
+ * @brief Generate a radom integer between A-D and A+D inclusive.
+ * @param A Number \n average number.
+ * @brief Average
+ * @param D Number \n deviation from average.
+ * @brief Deviation
+ * @return Number \n The random number.
+ * @note (see file w_z_pack.c)
+ */
+static s32b lua_rand_spread @ spread(s32b A, s32b D);
+
+/** @fn  percent(s32b P);
+ * @brief Return TRUE "P" % of the time.
+ * @param P Number \n percent chance the function returns TRUE.
+ * @brief Percent true
+ * @return Boolean \n TRUE if a random number from 0 to 99 is less than P,
+ * otherwise FALSE.
+ * @note (see file w_z_pack.c)
+ */
+static bool lua_magik @ percent(s32b P);
+
+
+/**** Available Variables ****/
+/** @var Rand_quick
+ * @brief Boolean
+ * @note
+ * If this is TRUE, then use the "simple" Random Number Generator.
+ * If this is FALSE, then use the "complex" Random Number Generator.
+ */
+extern bool Rand_quick;
+
+/** @var Rand_value
+ * @brief Number
+ * @note
+ * The current value (seed) of the simple Random Number Generator.
+ */
+extern u32b Rand_value;
+
+/**** Available Functions ****/
+/** @fn damroll(s32b num, s32b sides)
+ * @brief Generates damage for "2d6" style dice rolls.
+ * @param num Number \n the number of "dice" used.
+ * @brief Number
+ * @param sides Number \n the number of sides on each "die".
+ * @brief Sides
+ * @return Number \n The random number.
+ * @note
+ * The function simulates the rolling of "num" "sides"-sided dice. Each die
+ * will result in a random number from 1 to "sides".
+ * @note (see file z-rand.c)
+ */
+extern s16b damroll@roll(s32b num, s32b sides);
+
+/** @fn maxroll(s32b num, s32b sides)
+ * @brief Generate the maximum damage for "num" dice with "sides" sides each.
+ * @param num Number \n The number of "dice" used.
+ * @brief Number
+ * @param sides Number \n The number of sides on each "die".
+ * @brief Sides
+ * @return Number \n "num" * "sides".
+ * @note (see file z-rand.c)
+ */
+extern s16b maxroll(s32b num, s32b sides);
+
+/** @fn normal(s32b mean, s32b stand)
+ * @brief Generate a random integer number of NORMAL distribution
+ * @return Number
+ * @note (see file z-rand.c)
+ */
+extern s16b randnor@normal(s32b mean, s32b stand);
+}

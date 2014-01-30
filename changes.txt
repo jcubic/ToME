@@ -1,0 +1,35 @@
+T-Engine 3.0.0alpha19 aka "Bless The Child"
+
+??  changes:
+- Stores can now generate items along a theme (store_maker = "random_theme")
+
+Bug changes:
+- Fix vaults flag constraints
+- Uniques can now be generated as long as they are alive and artifacts as
+  long as they haven't been identified (preserve mode only).
+  n returning to a saved level where a killed (found) unique (artifact)
+  ides, it will be deleted.
+- Fixed projection effects with non-standard colors. 
+  However, these are no longer customisable by the *.prf files
+- Fixed BUGGY SKELETONS, allowing proper rotting of corpse
+- Fixed several memory leaks.
+- Fixed travel across map squares in the see-through wilderness mode.
+
+Monster changes:
+- New ESCORT_IGNORE_DUNGEON flag for monsters with escort
+  (Escorting monsters will ignore dungeon restrictions)
+- Amount of FRIENDS monsters no longer raise with the dungeon level
+- Implemented breeding monsters using ai.BREEDING
+
+Dungeon changes:
+- Minimum level for vaults can now be specified using the "level" parameter.
+- Nests and pits are now module-definable and use the Lua subsystem nests_and_pits.
+
+Object changes:
+- Egos can only be generated starting at their level.
+  Items can modify this by defining MIN_EGO_LEVEL and MAX_EGO_LEVEL.
+- Replaced MAX_QUANTITY by BASE_QUANTITY and SCALED_QUANTITY
+- Implemented corpse decaying on the floor. 
+  Hopefully it won't be much of an overhead.
+- Made corpse decaying optional and off by default. Set use_corpse_decay = true
+  to turn it on.

@@ -1,0 +1,169 @@
+map.define("lothlorien.map")
+
+-- Town Name: Lothlorien
+-- by Akhronath (zzhou22876@aol.com)
+--
+-- Created for PernAngband
+
+-- Import default symbols
+map.import("towns/symbols.map")
+
+---------------- Quest 22 - Wolves hut finished = house ----------------
+map.quest_symbol
+{
+	quest = 22
+	symbol = 'w'
+	symbols =
+	{
+		[{2, 5}] = { feat=FEAT_SHOP info=3 building=7 }
+		default = { feat=FEAT_QUEST_ENTER info=3 dungeon=22 }
+	}
+}
+
+---------------- Entrance to the Void ----------------
+map.quest_symbol
+{
+	quest = 20
+	symbol = 'v'
+	symbols =
+	{
+		[1] = { feat=FEAT_MORE info=3 dungoen=20 }
+		default = { feat=FEAT_DIRT info=3 }
+	}
+}
+
+---------------- Quest 10 - Spiders of Mirkwood ----------------
+-- Quest 10 taken, entrance is quest entrance
+map.quest_symbol
+{
+	quest = 10
+	symbol = 'y'
+	symbols =
+	{
+		[1] = { feat=FEAT_QUEST_ENTER info=3 dungeon=10 }
+		default = { feat=FEAT_TREES info=3 }
+	}
+}
+
+---------------- Quest - Mage/Fireroof quest ----------------
+-- Mage/Fireproof Quest taken, entrance is quest entrance
+map.quest_symbol
+{
+	quest = 1
+	symbol = 'z'
+	symbols =
+	{
+		[1] = { feat=FEAT_QUEST_ENTER info=3 dungeon=1 }
+		default = { feat=FEAT_TREES info=3 }
+	}
+}
+
+
+----------------------- Buildings -------------------------
+
+-- The Mirror
+map.symbol{ symbol='G' feat=FEAT_FLOWER info=3 monster=RACE_GALADRIEL }
+
+-- Seat of Ruling
+map.symbol{ symbol='b' feat=FEAT_SHOP info=3 building=24 }
+
+-- Inn
+map.symbol{ symbol='c' feat=FEAT_SHOP info=3 building=11 }
+
+-- Beastmaster Shanty
+map.symbol{ symbol='d' feat=FEAT_SHOP info=3 building=store.STORE_BEASTMASTER }
+
+-- Fighters Hall
+map.symbol{ symbol='f' feat=FEAT_SHOP info=3 building=17 }
+
+-- Wizards Spire
+map.symbol{ symbol='g' feat=FEAT_SHOP info=3 building=25 }
+
+-- Priests Circle
+map.symbol{ symbol='h' feat=FEAT_SHOP info=3 building=26 }
+
+-- Rangers Guild allows Ranger
+map.symbol{ symbol='i' feat=FEAT_SHOP info=3 building=21 }
+
+-- Nest
+map.symbol{ symbol='j' feat=FEAT_SHOP info=3 building=22 }
+
+-- Altars
+map.symbol{ symbol='k' feat=FEAT_ALTAR_ERU info=3 }
+map.symbol{ symbol='l' feat=FEAT_ALTAR_MANWE info=3 }
+map.symbol{ symbol='m' feat=FEAT_ALTAR_TULKAS info=3 }
+map.symbol{ symbol='n' feat=FEAT_ALTAR_YAVANNA info=3 }
+
+-- Force elven monsters
+level_flags.flags[FLAG_ELVEN] = 1
+
+-- Town Layout
+map.map
+{
+[[                                                                                                                                                                                                      ]],
+[[                          ,  ,                                       ,                             .              ,    ,                ,,                         , ,             ,                  ]],
+[[                       ,                          ,                                                .                                                                                               ,  ]],
+[[                ,              ,                                                                   .                                                                                                  ]],
+[[                            ,                            ,                          ,,           , .                                        ,      ,                                               ,  ]],
+[[                    ,,     ,                                                                       ,               ,                ,,          ,              ,               , ,              ,     ]],
+[[            ,                            ,    ,                          ,     ,                   ,        ,                                     ,                                                   ]],
+[[            ,                  ,                                   ,                               ,                                           ,                                 ,                    ]],
+[[                                                                                                   ,                                           ,                ,        ,                            ]],
+[[                ,,     ,                                                                           ,     ,    ,,                            ,                              ,                ,         ]],
+[[           ,            ,                                                                          ,                       ,                                                                          ]],
+[[                          ,  ,                                       ,                             ,              ,    ,                ,,                         , ,             ,                  ]],
+[[                       ,                          ,                                                ,                                                                                               ,  ]],
+[[                ,              ,                                         z,,,,                ##   ,   ##                                                                                             ]],
+[[                       ,                          ,                          ,               ####  ,  ####                                                                                         ,  ]],
+[[                ,              ,                                             ,   ###         ###1,,,,,h###                                                                                            ]],
+[[                            ,                            ,              ###  ,  #####,       ####, ,  ####                                  ,      ,                                               ,  ]],
+[[                    ,,     ,                                           ##### ,  #####         ##   ,   ##          ,                ,,          ,              ,               , ,              ,     ]],
+[[            ,                            ,    ,                        ##### , ,##.##    ###  ##   ,   ##   ,                                     ,                                                   ]],
+[[            ,                  ,                   #              #,   ##### ,  ##.##   #########  ,  ####                                     ,                                 ,                    ]],
+[[                ,,     ,                          ###            ###    #g#  ,    .     ########c,,,,,4###    ,,                            ,                              ,                ,         ]],
+[[                            ,                      ####  ,     ####      ,   ,    , ,,  #########  ,  ####                                  ,      ,                                               ,  ]],
+[[                    ,,     ,                        ##############       ,,,,,    ,      #9#  ##   ,   ##          ,                ,,          ,              ,               , ,              ,     ]],
+[[            ,                            ,    ,     ##############       ,     ,  ,       ,        ,   ##   ,                                     ,                                                   ]],
+[[            ,                  ,                     ###########j,,,,,,,,,,,,,,   ,       ,        ,  ####                                     ,                                 ,                    ]],
+[[           ,            ,                           ##############       ,    ,,,,,,,,,,,,,,,,,,,,,,,,d###    y            ,                                                                          ]],
+[[                          ,  ,                      ##############   ,   ,                         ,  ####  ,,    ,    ,                ,,                         , ,             ,                  ]],
+[[                       ,                          ,####        ####      ,                         ,   ##  ,                                                                                       ,  ]],
+[[                ,              ,                  ###            ###    #6#       ###    ###       ,      ,   ###  ###                                                                                ]],
+[[            ,                  ,                   #              #,   #####      ###    ###       ,   ,,,   ##########                        ,                                 ,                    ]],
+[[                                                                       #####      #7#    #i#    ,,,,,,,,     ##########                        ,                ,        ,                            ]],
+[[                ,,     ,                                                ###        ,      ,     ,  ,   , ,    #3#  ###                      ,                              ,                ,         ]],
+[[           ,            ,                                                          ,      ,    ,,  ,   ,       ,    ,   ## ,                                                                          ]],
+[[                          ,  ,                                                ,,,  ,,,,,,,,,,,,,  ,,,  ,       ,  , ,  ####             ,,                         , ,             ,                  ]],
+[[                       ,                          ,                           , ,,,,           ,,,,b,,,,,,,,,,,,,,,,,,,w###                                                                        ,  ]],
+[[                ,              ,                                             v,                   ,,,             ,    ####                                                                           ]],
+[[                            ,                            ,                 --,--    ,,             ,   VVV        ,     ##                  ,      ,                                               ,  ]],
+[[                    ,,     ,                                            l----,----m                , VWWWV       #2#                ,,          ,              ,               , ,              ,     ]],
+[[            ,                            ,    ,                         ---VV,VV---                , VWWVV  ,   #####                             ,                                                   ]],
+[[           ,            ,                                              ---VVW,WVV---               , VVVV       #####      ,                                                                          ]],
+[[                          ,  ,                                       , ---VWWGWVV---               ,,            ###   ,                ,,                         , ,             ,                  ]],
+[[                                                                       ---VVWWWVV---                ,,,                                        ,                ,        ,                            ]],
+[[                ,,     ,                                                ---VVVVV---   ,,,,,,,,,,,,,,, ,       ,,                            ,                              ,                ,         ]],
+[[                                                                        n---------k   ,               ,                                        ,                ,        ,                            ]],
+[[                       ,                          ,                         ---       ,              #5#                                                                                           ,  ]],
+[[                ,              ,                                                      ,              ###                                                                                              ]],
+[[                            ,                            ,                            ,          ,   ###                                    ,      ,                                               ,  ]],
+[[                    ,,     ,                                                         #0#                           ,                ,,          ,              ,               , ,              ,     ]],
+[[            ,                            ,    ,                          ,     ,    #####                   ,                                     ,                                                   ]],
+[[            ,                  ,                                   ,                #####                                                      ,                                 ,                    ]],
+[[                                                                                     ###                                                       ,                ,        ,                            ]],
+[[                ,,     ,                                                                                 ,    ,,                            ,                              ,                ,         ]],
+[[           ,            ,                                                                                                  ,                                                                          ]],
+[[                          ,  ,                                       ,                                            ,    ,                ,,                         , ,             ,                  ]],
+[[                            ,                            ,                          ,,           ,                                          ,      ,                                               ,  ]],
+[[                    ,,     ,                                                                                       ,                ,,          ,              ,               , ,              ,     ]],
+[[            ,                            ,    ,                          ,     ,                            ,                                     ,                                                   ]],
+[[            ,                  ,                                   ,                                                                           ,                                 ,                    ]],
+[[                                                                                                                                               ,                ,        ,                            ]],
+[[                ,,     ,                                                                                 ,    ,,                            ,                              ,                ,         ]],
+[[                       ,                          ,                                                                                                                                                ,  ]],
+[[                ,              ,                                                                                                                                                                      ]],
+[[                            ,                            ,                          ,,           ,                                          ,      ,                                               ,  ]],
+[[                    ,,     ,                                                                                       ,                ,,          ,              ,               , ,              ,     ]],
+[[                                                                                                                                                                                                      ]],
+[[                                                                                                                                                                                                      ]],
+}

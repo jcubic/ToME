@@ -1,0 +1,485 @@
+/* File: object.pkg */
+
+/*
+ * Purpose: Lua interface defitions for objects.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+/** @name Bit Flags
+ * @note Bit flags for the "get_item" function
+ * @{ */
+/** @def USE_EQUIP
+ * @note Allow equip items
+ */
+#define USE_EQUIP    0x01
+/** @def USE_INVEN
+ * @note Allow inven items
+ */
+#define USE_INVEN    0x02
+/** @def USE_FLOOR
+ * @note Allow floor items
+ */
+#define USE_FLOOR    0x04
+/** @def USE_EXTRA
+ * @note Allow extra items
+ */
+#define USE_EXTRA    0x08
+/** @def USE_AUTO
+ * @note Allow creation of automatizer rule
+ */
+#define USE_AUTO     0x10
+/** @def USE_DISPLAY
+ * @note Displays the list automatically
+ */
+#define USE_DISPLAY  0x20
+/** @def USE_SHOW_NO_ITEM
+ * @note Shows a "list" even if empty
+ */
+#define USE_SHOW_NO_ITEM 0x40
+/** @} */
+
+
+/** @name Inventory Flags
+ * @note Bit flags for the "get_item" function
+ * @{ */
+#define INVEN_INVEN     0
+#define INVEN_MAX_SIZE  100
+#define INVEN_LIMIT_KEY 0
+/** @} */
+
+
+#define TV_CORPSE        1      /* Monster corpses */
+
+/* The "sval" codes for TV_CORPSE */
+#define SV_CORPSE_CORPSE     1
+#define SV_CORPSE_SKELETON   2
+#define SV_CORPSE_HEAD       3
+#define SV_CORPSE_SKULL      4
+#define SV_CORPSE_MEAT       5
+
+/*
+ * Special Object Flags
+ */
+#define IDENT_SENSE             0x01    /* Item has been "sensed" */
+#define IDENT_FIXED             0x02    /* Item has been "haggled" */
+#define IDENT_EMPTY             0x04    /* Item charges are known */
+#define IDENT_KNOWN             0x08    /* Item abilities are known */
+#define IDENT_STOREB            0x10    /* Item is storebought !!!! */
+#define IDENT_MENTAL            0x20    /* Item information is known */
+#define IDENT_CURSED            0x40    /* Item is temporarily cursed */
+
+/*
+ * Location of objects when they were found
+ */
+#define OBJ_FOUND_MONSTER       OBJ_FOUND_MONSTER
+#define OBJ_FOUND_FLOOR         OBJ_FOUND_FLOOR
+#define OBJ_FOUND_VAULT         OBJ_FOUND_VAULT
+#define OBJ_FOUND_SPECIAL       OBJ_FOUND_SPECIAL
+#define OBJ_FOUND_RUBBLE        OBJ_FOUND_RUBBLE
+#define OBJ_FOUND_REWARD        OBJ_FOUND_REWARD
+#define OBJ_FOUND_STORE         OBJ_FOUND_STORE
+#define OBJ_FOUND_STOLEN        OBJ_FOUND_STOLEN
+#define OBJ_FOUND_SELFMADE      OBJ_FOUND_SELFMADE
+#define OBJ_FOUND_WISH          OBJ_FOUND_WISH
+#define OBJ_FOUND_DEBUG         OBJ_FOUND_DEBUG
+#define OBJ_FOUND_START         OBJ_FOUND_START
+
+#define MAX_KIND_ALLOCATIONS
+#define MAX_TVALS_PER_EGO
+#define MAX_EGO_FLAG_GROUPS
+
+/*
+ * Maximun number of egosper objects(change = break savefiles)
+ */
+#define MAX_EGO_PER_OBJ
+
+/** @struct object_kind
+ * @{ */
+struct object_kind
+{
+	cptr name;			/* Name (offset) */
+	cptr text;			/* Text (offset) */
+
+	byte tval;			/* Object type */
+	byte sval;			/* Object sub type */
+
+	s16b to_h;			/* Bonus to hit */
+	s16b to_d;			/* Bonus to damage */
+	s16b to_a;			/* Bonus to armor */
+
+	s16b ac;			/* Base armor */
+
+	byte dd;
+	byte ds;            /* Damage dice/sides */
+
+	s32b weight;            /* Weight */
+
+	s32b cost;			/* Object "base cost" */
+
+	flags_type flags;		/* Flags, set 1 */
+
+	byte locale[MAX_KIND_ALLOCATIONS]; /* Allocation level(s) */
+	byte chance[MAX_KIND_ALLOCATIONS]; /* Allocation chance(s) */
+
+	byte level;			/* Level */
+	byte extra;			/* Something */
+
+
+	byte d_attr;		/* Default object attribute */
+	char d_char;		/* Default object character */
+
+
+	byte x_attr;		/* Desired object attribute */
+	char x_char;		/* Desired object character */
+
+
+	byte flavor;			/* Special object flavor (or zero) */
+
+	bool easy_know;		/* This object is always known (if aware) */
+
+
+	bool aware;			/* The player is "aware" of the item's effects */
+
+	bool tried;			/* The player has "tried" one of the items */
+
+	bool know;                      /* extractable flag for the alchemist */
+
+	byte btval;                     /* Become Object type */
+	byte bsval;                     /* Become Object sub type */
+	bool artifact;                  /* Is it a normal artifact(already generated) */
+
+	s16b power;                     /* Power granted(if any) */
+};
+/** @} */
+
+
+/** @struct artifact_type
+ * @{ */
+struct artifact_type
+{
+	cptr name;			/* Name (offset) */
+	cptr unknown_name;	/* Name displayed when unaware */
+	cptr text;			/* Text (offset) */
+
+	byte tval;		/* Artifact type */
+	byte sval;		/* Artifact sub type */
+
+	s16b d_attr;	/* Default attribute (-1 for same as base object) */
+	s16b x_attr;	/* Desired attribute (-1 for same as base object) */
+
+	s16b to_h;		/* Bonus to hit */
+	s16b to_d;		/* Bonus to damage */
+	s16b to_a;		/* Bonus to armor */
+
+	s16b ac;		/* Base armor */
+
+	byte dd;
+	byte ds;		/* Damage when hits */
+
+	s16b weight;	/* Weight */
+
+	s32b cost;		/* Artifact "cost" */
+
+	flags_type flags;		/* Artifact Flags, set 1 */
+
+	byte level;			/* Artifact level */
+	byte rarity;		/* Artifact rarity */
+
+	s16b cur_num;		/* Number created (0 or 1) */
+	s16b max_num;		/* Unused (should be "1") */
+	bool known;			/* Artifact has been identified */
+	s16b power;                     /* Power granted(if any) */
+
+	s16b set;               /* Does it belongs to a set ?*/
+	s16b set_pos;           /* Does it belongs to a set, if so in which "position" ? */
+};
+/** @} */
+
+
+/** @struct ego_item_type
+ * @{ */
+struct ego_item_type
+{
+	cptr name;			/* Name (offset) */
+	cptr text;			/* Text (offset) */
+
+	bool before;                    /* Before or after the object name ? */
+	cptr ego_group;			/* Ego group */
+
+	byte tval[MAX_TVALS_PER_EGO];
+	byte min_sval[MAX_TVALS_PER_EGO];
+	byte max_sval[MAX_TVALS_PER_EGO];
+        flags_type item_kinds_ok;
+
+	byte rating;		/* Rating boost */
+
+	byte level;		/* Minimum level */
+        s16b allocation;        /* Allocation chance */
+
+	s16b max_to_h;          /* Maximum to-hit bonus */
+	s16b max_to_d;          /* Maximum to-dam bonus */
+	s16b max_to_a;          /* Maximum to-ac bonus */
+
+    u32b base_value_pct;    /* Item's base value is X% after ego applied */
+    u32b value_add;         /* Value ego adds to the item  */
+
+	byte rar[MAX_EGO_FLAG_GROUPS];
+	flags_type flags[MAX_EGO_FLAG_GROUPS];            /* Ego-Item Flags, set 1 */
+
+	flags_type need_flags;
+	flags_type forbid_flags;
+
+	s16b power;                     /* Power granted(if any) */
+};
+/** @} */
+
+
+/** @struct object_type
+ * @{ */
+struct object_type
+{
+	s16b k_idx;			/* Kind index (zero if "dead") */
+
+	byte iy;			/* Y-position on map, or zero */
+	byte ix;			/* X-position on map, or zero */
+
+	byte tval;			/* Item type (from kind) */
+	byte sval;			/* Item sub-type (from kind) */
+
+	byte discount;		/* Discount (if any) */
+
+	byte number;		/* Number of items */
+
+	s32b weight;            /* Item weight */
+
+	byte elevel;            /* Item exp level */
+	s32b exp;               /* Item exp */
+
+	byte d_attr;		/* Default object attribute */
+	byte x_attr;		/* Desired object attribute */
+
+	s16b artifact_id;			/* Artifact type, if any */
+	s16b ego_id[MAX_EGO_PER_OBJ];	/* Ego-Item types, if any */
+
+	byte xtra1;			/* Extra info type */
+	s16b xtra2;                     /* Extra info index */
+
+	s16b to_h;			/* Plusses to hit */
+	s16b to_d;			/* Plusses to damage */
+	s16b to_a;			/* Plusses to AC */
+
+	s16b ac;			/* Normal AC */
+
+	byte dd;
+	byte ds;            /* Damage dice/sides */
+
+	s16b timeout;		/* Timeout Counter */
+
+	byte ident;			/* Special flags  */
+
+	byte marked;		/* Object is marked */
+
+	u16b note;			/* Inscription index */
+	u16b art_name;      /* Artifact name (random artifacts) */
+
+	flags_type flags;
+
+	s16b next_o_idx;	/* Next object in stack (if any) */
+
+	s16b held_m_idx;	/* Monster holding us (if any) */
+
+	byte sense;             /* Pseudo-id status */
+
+	byte found;             /* How did we find it */
+	s16b found_aux1;        /* Stores info for found */
+	s16b found_aux2;        /* Stores info for found */
+	s16b found_aux3;        /* Stores info for found */
+	s16b found_aux4;        /* Stores info for found */
+};
+/** @} */
+
+/*
+ * Item sets
+ */
+struct __set_type_aux
+{
+	bool present;                   /* Is it actually wore ? */
+	s16b a_idx;                     /* What artifact ? */
+	flags_type flags[6];            /* flags */
+};
+
+struct set_type
+{
+	cptr name;                              /* Name */
+	cptr desc;                              /* Desc */
+
+	byte num;                               /* Number of artifacts used */
+	byte num_use;                           /* Number actually wore */
+
+	__set_type_aux arts[6];				/* the various items */
+
+	cptr load_script;
+};
+
+
+/* Pseudo-id defines */
+#define SENSE_NONE                      0
+#define SENSE_CURSED			1
+#define SENSE_AVERAGE			2
+#define SENSE_GOOD_LIGHT		3
+#define SENSE_GOOD_HEAVY		4
+#define SENSE_EXCELLENT			5
+#define SENSE_WORTHLESS			6
+#define SENSE_TERRIBLE			7
+#define SENSE_SPECIAL			8
+#define SENSE_BROKEN			9
+#define SENSE_UNCURSED			10
+
+extern u16b max_k_idx;
+extern u16b max_a_idx;
+extern u16b max_e_idx;
+extern u16b max_ra_idx;
+extern s16b max_set_idx;
+extern object_kind k_info[max_k_idx];
+extern artifact_type a_info[max_a_idx];
+extern ego_item_type e_info[max_e_idx];
+extern set_type set_info[max_set_idx];
+
+extern s16b object_level;
+
+extern s16b m_bonus(s32b max, s32b level);
+extern s16b wield_slot_ideal(object_type *o_ptr, bool ideal);
+extern s16b wield_slot(object_type *o_ptr);
+extern char *lua_object_desc_store @ object_desc_store(object_type *o_ptr, s32b pref, s32b mode);
+extern void item_describe(s32b item);
+extern void item_increase(s32b item, s32b num);
+extern bool item_optimize(s32b item);
+extern void delete_object_idx(s32b o_idx);
+extern bool ident_all(void);
+extern s16b lookup_kind(s32b tval, s32b sval);
+extern void object_wipe(object_type *o_ptr);
+extern void object_prep(object_type *o_ptr, s32b k_idx);
+extern void object_copy(object_type *o_ptr, object_type *j_ptr);
+extern bool inven_carry_okay(object_type *o_ptr);
+extern void apply_magic(object_type *o_ptr, s32b lev, bool okay, bool good, bool great);
+extern void place_object(s32b y, s32b x, bool good, bool great, s32b where);
+extern s16b drop_near(object_type *o_ptr, s32b chance, s32b y, s32b x);
+extern void acquirement(s32b y1, s32b x1, s32b num, bool great, bool known);
+extern object_type *get_object(s32b item);
+extern void set_object(s32b item, object_type *o_ptr);
+extern object_type *new_object();
+extern object_type *object_dup(object_type *j_ptr);
+extern void delete_object(object_type *o_ptr);
+extern bool item_tester_okay(object_type *o_ptr, s32b item);
+extern bool get_item @ get_item_aux(s32b *cp, cptr pmt, cptr str, s32b mode);
+extern void lua_set_item_tester(s32b tval, char *fct);
+extern void make_item_fully_identified(object_type *o_ptr);
+extern void identify_pack_fully(void);
+extern s16b inven_carry_inven(flags_type *inven, object_type *o_ptr, bool final);
+extern s32b calc_total_weight(void);
+extern s32b get_slot(s32b slot);
+extern cptr sense_desc[1000];  /* 1000 is just a hack for tolua */
+extern void object_pickup(s32b this_o_idx);
+extern s16b inven_takeoff(s32b item, s32b amt, bool force_drop, bool silent=FALSE);
+extern s16b inven_drop(s32b item, s32b amt, s32b dy, s32b dx, bool silent);
+extern bool make_gold(object_type *j_ptr);
+extern void place_gold(s32b y, s32b x);
+extern bool object_out_desc(object_type *q_ptr, PHYSFS_file *fff=NULL, bool trim_down=FALSE, bool wait_for_it=TRUE);
+
+$static bool lua_is_artifact(object_type *o_ptr) { return artifact_p(o_ptr); }
+static bool lua_is_artifact@is_artifact(object_type *o_ptr);
+
+$static bool lua_is_ego(object_type *o_ptr) { return ego_item_p(o_ptr); }
+static bool lua_is_ego@is_ego(object_type *o_ptr);
+
+$static bool lua_is_known(object_type *o_ptr) { return object_known_p(o_ptr); }
+static bool lua_is_known@is_known(object_type *o_ptr);
+
+$static void lua_set_known(object_type *o_ptr) { object_known(o_ptr); }
+static void lua_set_known@set_known(object_type *o_ptr);
+
+$static bool lua_is_cursed(object_type *o_ptr) { return cursed_p(o_ptr); }
+static bool lua_is_cursed@is_cursed(object_type *o_ptr);
+
+extern bool object_similar(object_type *o_ptr, object_type *j_ptr);
+extern void object_absorb(object_type *o_ptr, object_type *j_ptr);
+extern void object_unabsorb(object_type *o_ptr, object_type *j_ptr);
+
+extern byte value_check_aux1(object_type *o_ptr);
+extern byte value_check_aux1_magic(object_type *o_ptr);
+extern byte value_check_aux2(object_type *o_ptr);
+extern byte value_check_aux2_magic(object_type *o_ptr);
+extern byte select_sense(object_type *o_ptr, bool ok_combat, bool ok_magic);
+
+extern bool remove_curse_object(object_type *o_ptr, bool all);
+
+extern void object_track(object_type *o_ptr);
+
+extern bool get_item_extra_hook(s32b *cp=0);
+extern bool get_item_allow(s32b item);
+extern bool get_tag(s32b *cp=0, char tag);
+
+extern s32b object_value(object_type *o_ptr);
+extern s32b object_value_real(object_type *o_ptr);
+
+extern cptr get_item_hook_find_obj_what;
+extern bool get_item_hook_find_obj(s32b *item);
+
+extern byte tval_to_attr[128];
+
+
+/** @struct inventory_slot_type
+ * @brief Item slots
+ * @{ */
+struct inventory_slot_type
+{
+	cptr desc;
+	cptr name;
+	cptr describe;
+	cptr wear;
+	cptr takeoff;
+};
+/** @} */
+
+
+extern inventory_slot_type inventory_slot_names[INVEN_TOTAL];
+extern s16b INVEN_PACK;
+extern s16b INVEN_TOTAL;
+
+extern bool repair_objects;
+
+extern cptr mention_use(s32b i);
+extern cptr describe_use(s32b i);
+
+extern void preserve_artifacts_in_inven(flags_type *inven);

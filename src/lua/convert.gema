@@ -1,0 +1,39 @@
+! This is a Gel file, Gel is Gema+Lua
+! Gema is a macro processor
+! Lua rules ;)
+! Gel: http://www.dentato.com/gel/
+
+@lua{dofile("lua/convert.lua")}
+
+! Comments
+<S>\/\*<U>\*\/=
+
+! Structure begin
+struct<S><I><S>{=@lua{return begin_struct("$2")}
+
+! Struct ends
+!\\}\;=@lua{return "}"}
+
+! Normal field
+<S><I><S><I>\;=@lua{return simple_field("$2", "$4")}
+
+! Array field
+<S><I><S><I>[<I>][<I>]\;=@lua{return darray_field("$2", "$4", "$5", "$6")}
+<S><I><S><I>[<U>]\;=@lua{return array_field("$2", "$4", "$5")}
+
+! Saving infos
+\LSAVE\:<I>[<I>]\=\><U>=@lua{saving_info("$1", "$2", "$3")}
+AFTER_LOAD_EXEC\:<I>=@lua{exec_info([[$1]])}
+FILE_LOAD_SCRIPT=@lua{saving[cur_struct].load_script=1}
+
+! Substructure, doesnt have a valid saving stuff but needs the lua loading code
+\LSUBSTRUCT=@lua{substruct()}
+
+! Does this require some basic defines from the core itself?
+\LLOAD_CORE_DEFAULT\:<U>=@lua{load_core_default("$1")}
+
+! Ouput debug info
+\LDEBUG=@lua{debug()}
+
+\B=@lua{return begin_file()}
+\E=@lua{return end_file()}

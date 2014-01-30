@@ -1,0 +1,326 @@
+# This is based on Makefile.std but stripped and tuned for FreeBSD (and
+# presumably will cooperate with other BSDs)
+
+## Installation locations and such
+
+PREFIX ?= /usr/local
+X11BASE ?= /usr/X11R6
+
+TOMENAME = tome3
+
+# Where lib/ files goes
+# If no LIBDIR is defined then tome will look for tome.cfg in the same
+# directory as the executable
+LIBDIR = $(PREFIX)/share/$(TOMENAME)
+
+# Where ToME binary goes
+BINDIR = $(PREFIX)/bin
+
+# SDL is required now
+SDL_CONFIG ?= sdl-config
+SDLINCLUDES = `$(SDL_CONFIG) --cflags`
+SDLLIBS = `$(SDL_CONFIG) --libs` -lSDL_net -lSDL_mixer
+
+# Compiler
+CC ?= cc
+
+# Standard version (see main-x11.c and main-gcu.c)
+#
+# This version supports both "X11" and "curses" in a single executable.
+
+COPTS = -Wall -g
+INCLUDES = -I$(X11BASE)/include
+DEFINES = -DUSE_X11 -DUSE_GCU \
+	-DUSE_TRANSPARENCY \
+	-DUSE_EGO_GRAPHICS \
+	-DSUPPORT_GAMMA \
+	-DUSE_PRECISE_CMOVIE \
+	-DUSE_UNIXSOCK
+LIBS = -lX11 -lcurses -L$(X11BASE)/lib
+
+##
+## Variation -- Use "main-sdl.c" instead of "main-x11.c"
+##
+#COPTS = -Wall -g
+#INCLUDES =
+#DEFINES = -DUSE_SDL \
+#	-DUSE_EGO_GRAPHICS \
+#	-DUSE_TRANSPARENCY \
+#	-DSUPPORT_GAMMA \
+#	-DUSE_PRECISE_CMOVIE \
+#	-DUSE_UNIXSOCK
+#LIBS = -lSDL_image -lSDL_ttf -lSDL_gfx
+
+### End of configurable section ###
+
+#
+# Physfs(FS abstraction lib)
+#
+TOMEINCLUDES += -Iphysfs -Iphysfs/zlib114
+DEFINES += -DPHYSFS_NO_CDROM_SUPPORT -DPHYSFS_SUPPORTS_ZIP
+PHYSFSOBJS += \
+	io.o \
+	physfs/archiver/dir.o \
+	physfs/archiver/zip.o \
+	physfs/physfs.o \
+	physfs/physfs_byteorder.o \
+	physfs/physfsrwops.o \
+	physfs/platform/posix.o \
+	physfs/platform/unix.o \
+	physfs/zlib114/adler32.o \
+	physfs/zlib114/compress.o \
+	physfs/zlib114/crc32.o \
+	physfs/zlib114/deflate.o \
+	physfs/zlib114/infblock.o \
+	physfs/zlib114/infcodes.o \
+	physfs/zlib114/inffast.o \
+	physfs/zlib114/inflate.o \
+	physfs/zlib114/inftrees.o \
+	physfs/zlib114/infutil.o \
+	physfs/zlib114/gzio.o \
+	physfs/zlib114/trees.o \
+	physfs/zlib114/uncompr.o \
+	physfs/zlib114/zutil.o
+
+#
+# Lua support
+#
+
+TOMEINCLUDES += -Ilua -I.
+DEFINES += -DUSE_LUA -DLUA_ERROR_TO_TERMINAL
+
+LUAOBJS = \
+	lua_bind.o \
+	script.o \
+	w_dun.o \
+	w_fs.o \
+	w_mnster.o \
+	w_net.o \
+	w_obj.o \
+	w_play_c.o \
+	w_player.o \
+	w_quest.o \
+	w_sound.o \
+	w_spells.o \
+	w_util.o \
+	w_z_pack.o \
+	lua/luac.o
+
+TOLUAOBJS = \
+	z-form.o \
+	z-util.o \
+	z-virt.o \
+	lua/lapi.o \
+	lua/lauxlib.o \
+	lua/lbaselib.o \
+	lua/lcode.o \
+	lua/ldblib.o \
+	lua/ldebug.o \
+	lua/ldo.o \
+	lua/lfunc.o \
+	lua/lgc.o \
+	lua/liolib.o \
+	lua/llex.o \
+	lua/lmem.o \
+	lua/lobject.o \
+	lua/lparser.o \
+	lua/lstate.o \
+	lua/lstring.o \
+	lua/lstrlib.o \
+	lua/ltable.o \
+	lua/ltests.o \
+	lua/ltm.o \
+	lua/lundump.o \
+	lua/lvm.o \
+	lua/lzio.o \
+	lua/tolua_bd.o \
+	lua/tolua_eh.o \
+	lua/tolua_gp.o \
+	lua/tolua_lb.o \
+	lua/tolua_rg.o \
+	lua/tolua_tm.o \
+	lua/tolua_tt.o
+
+TOLUA  = ./tolua
+
+TOLUADEP = $(PHYSFSOBJS) $(TOLUAOBJS) lua/tolua.o lua/tolualua.o
+
+#
+# The C part of the T-Engine itself
+#
+
+#
+# If tome.cfg path is forced, well .. force it
+DEFINES += `sh -c 'if test -n "$(LIBDIR)"; then echo -DFORCE_TOME_CFG_PATH=\"$(LIBDIR)\"; fi'`
+
+TOMEOBJS = \
+	birth.o \
+	cache.o \
+	cave.o \
+	cmd1.o \
+	cmd2.o \
+	cmd3.o \
+	cmd4.o \
+	cmd5.o \
+	cmd6.o \
+	cmd7.o \
+	cmovie.o \
+	dungeon.o \
+	files.o \
+	flags.o \
+	gen_evol.o \
+	gen_maze.o \
+	generate.o \
+	ghost.o \
+	gods.o \
+	help.o \
+	init1.o \
+	init2.o \
+	levels.o \
+	loadsave.o \
+	main-gcu.o \
+	main-sdl.o \
+	main-x11.o \
+	main.o \
+	melee1.o \
+	melee2.o \
+	modules.o \
+	monster1.o \
+	monster2.o \
+	monster3.o \
+	music.o \
+	net.o \
+	notes.o \
+	object1.o \
+	object2.o \
+	object3.o \
+	pathfind.o \
+	plots.o \
+	powers.o \
+	randart.o \
+	sdl-events.o \
+	sdl-glyph.o \
+	sdl-log.o \
+	sdl-utility.o \
+	SFMT.o \
+	skills.o \
+	speed.o \
+	spells1.o \
+	spells2.o \
+	squeltch.o \
+	store.o \
+	tables.o \
+	traps.o \
+	util.o \
+	variable.o \
+	vector.o \
+	wild.o \
+	wizard1.o \
+	wizard2.o \
+	xtra1.o \
+	xtra2.o \
+	z-rand.o \
+	z-term.o \
+	physfs/zlib114/ioapi.o \
+	physfs/zlib114/zip.o
+
+#
+# Compiler options
+#
+
+CFLAGS = $(TOMEINCLUDES) $(SDLINCLUDES) $(COPTS) $(INCLUDES) $(DEFINES)
+
+ALLLIBS = $(TOMELIBS) $(SDLLIBS) $(LIBS)
+
+
+#
+# Build the binary. The new base target.
+#
+
+TARGET = $(TOMENAME)
+
+default: $(TARGET)
+
+$(TOLUA): $(TOLUADEP)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(TOLUADEP) $(ALLLIBS)
+
+TARGETDEP = $(TOMEOBJS) $(PHYSFSOBJS) $(LUAOBJS) $(TOLUAOBJS)
+
+$(TARGET): $(TARGETDEP)
+	$(CC) $(LDFLAGS) -o $@ $(TARGETDEP) $(ALLLIBS)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+#
+# An install rule.
+#
+mini_install: default
+	cp -f $(TARGET) ..
+
+install: default
+	[ -d $(LIBDIR)/game ] || mkdir -p $(LIBDIR)/game
+	[ -d $(BINDIR) ] || mkdir -p $(BINDIR)
+	cp -f ../tome.cfg $(LIBDIR)
+	cp -R ../game/* $(LIBDIR)/game/
+	cp -f $(TARGET) $(BINDIR)/$(TARGET)
+	strip $(BINDIR)/$(TARGET)
+
+#
+# Housekeeping
+#
+
+ALLOBJS = $(TOMEOBJS) $(TOLUADEP) $(LUAOBJS)
+ALLSRCS = `echo $(ALLOBJS) | sed 's/\.o/.c/g'`
+
+clean:
+	rm -f *.bak w_*.c $(ALLOBJS) $(TOLUA) $(TARGET)
+
+depend:
+	makedepend -f makefile.bsd $(INCLUDES) $(DEFINES) -D__MAKEDEPEND__ $(ALLSRCS)
+
+#
+# Lua library compilation rules
+#
+
+w_dun.c: dungeon.pkg $(TOLUA)
+	$(TOLUA) -n dungeon -o w_dun.c dungeon.pkg
+
+w_fs.c: physfs.pkg $(TOLUA)
+	$(TOLUA) -n physfs -o w_fs.c physfs.pkg
+
+w_mnster.c: monster.pkg $(TOLUA)
+	$(TOLUA) -n monster -o w_mnster.c monster.pkg
+
+w_net.c: net.pkg $(TOLUA)
+	$(TOLUA) -n net -o w_net.c net.pkg
+
+w_obj.c: object.pkg $(TOLUA)
+	$(TOLUA) -n object -o w_obj.c object.pkg
+
+w_play_c.c: player_c.pkg $(TOLUA)
+	$(TOLUA) -n player_c -o w_play_c.c player_c.pkg
+
+w_player.c: player.pkg $(TOLUA)
+	$(TOLUA) -n player -o w_player.c player.pkg
+
+w_quest.c: quest.pkg $(TOLUA)
+	$(TOLUA) -n quest -o w_quest.c quest.pkg
+
+w_sound.c: sound.pkg $(TOLUA)
+	$(TOLUA) -n sound -o w_sound.c sound.pkg
+
+w_spells.c: spells.pkg $(TOLUA)
+	$(TOLUA) -n spells -o w_spells.c spells.pkg
+
+w_util.c: util.pkg $(TOLUA)
+	$(TOLUA) -n util -o w_util.c util.pkg
+
+w_z_pack.c: z_pack.pkg $(TOLUA)
+	$(TOLUA) -n z_pack -o w_z_pack.c z_pack.pkg
+
+# Uncomment if you have gel(and need to rebuild the cache generator)
+#cache.c: cache.ls
+#	gel -f lua/convert.gema cache.ls cache.c
+
+# DO NOT DELETE THIS LINE - make depend depends on it.

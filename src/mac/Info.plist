@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+  <dict>
+    <key>CFBundleName</key><string>ToME 3</string>
+    <key>CFBundleDisplayName</key><string>T.o.M.E. 3</string>
+    <key>CFBundleExecutable</key><string>tome</string>
+    <key>CFBundleSignature</key><string>ToME</string>
+    <key>CFBundleVersion</key><string>3.0.0 alpha 17</string>
+    <key>CFBundleShortVersionString</key><string>3.0.0 alpha 18</string>
+    <key>CFBundleIconFile</key><string>ToME</string>
+    <key>CFBundleIdentifier</key><string>net.t-o-m-e.tome3</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  </dict>
+</plist>

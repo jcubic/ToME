@@ -1,0 +1,61 @@
+/* File: sound.pkg */
+
+/*
+ * Purpose: Lua interface defitions for sound/music routines.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+$#include "music.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+/** @module sound
+ * @{ */
+module sound
+{
+	extern Mix_Music *music_load_music@__load_music(cptr file);
+	extern bool music_play_music@__play_music(Mix_Music *music, s32b loop, s32b fade_in_time);
+	extern bool Mix_PlayingMusic@is_playing_music();
+	extern bool Mix_PausedMusic@is_paused_music();
+	extern void Mix_PauseMusic@pause_music();
+	extern s32b Mix_FadingMusic@is_fading_music();
+	extern void Mix_ResumeMusic@resume_music();
+	extern void Mix_FadeOutMusic@fade_out_music(s32b fade_out_time);
+	extern void Mix_HaltMusic@stop_music();
+	extern s32b Mix_VolumeMusic@volume_music(s32b volume);
+	extern s32b Mix_SetMusicPosition@set_position_music(s32b pos);
+
+	extern Mix_Chunk *music_load_sample@__load_sample(cptr file);
+	extern bool music_play_sample@__play_sample(Mix_Chunk *sample, s32b channel, s32b loop, s32b fade_in_time);
+
+	extern bool sound_not_available@not_available;
+}
+/** @} */

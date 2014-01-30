@@ -1,0 +1,5 @@
+This directory is meant to put addons and patches for the engine or all
+the modules.
+
+Example of those are the Luashell or the Flagseditor patch.
+Module specific addons/patches MUST go in the module own addons directory.

@@ -1,0 +1,3 @@
+This is the ToME module.
+This directory structure is what any module should be like in order
+to work.

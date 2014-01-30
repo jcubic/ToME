@@ -1,0 +1,3 @@
+This directory is meant to hold all the modules you want to play.
+Just put the module directory or .team file in there and the engine
+will automatically find it.

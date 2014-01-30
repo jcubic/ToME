@@ -1,0 +1,20 @@
+# File: graf-win.prf
+
+#
+# This file defines special attr/char mappings for use in "graphics" mode
+#
+# See "game/help/command.txt" and "src/files.c" for more information.
+#
+
+
+# 8x8 tiles
+?:[EQU $GRAF 8]
+%:graf-8.prf
+
+# 16x16 tiles
+?:[EQU $GRAF 16]
+%:graf-16.prf
+
+# 32x32 tiles
+?:[EQU $GRAF 32]
+%:graf-32.prf

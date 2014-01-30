@@ -1,0 +1,1816 @@
+/* File: spells.pkg */
+
+/*
+ * Purpose: Lua interface defitions for spells.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+$#include "lua.h"
+
+/** @typedef *mcptr
+ * @note String
+ */
+typedef char *mcptr;
+
+/** @typedef cptr
+ * @note String
+ */
+typedef const char* cptr;
+
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+/** @def DEFAULT_RADIUS */
+#define DEFAULT_RADIUS	25
+
+/** @name Project source
+ * @brief The source of the projected damage, either > 0 for a monster index, 0 for player or one of those
+ * @{ */
+/** @def WHO_PLAYER
+ * @note Source is the player
+ */
+#define WHO_PLAYER      0
+/** @def WHO_TRAP
+ * @note Source is a trap
+ */
+#define WHO_TRAP	-2
+/** @def WHO_DUNGEON
+ * @note Source is the current dungeon level
+ */
+#define WHO_DUNGEON     -100
+/** @def WHO_FLOOR
+ * @note Source is the current position
+ */
+#define WHO_FLOOR       -101
+/** @} */
+
+
+/** @name Spell Projection Flags
+ * @brief Area affected by spell
+ * @{ */
+/** @def PROJECT_JUMP
+ * @note Jump directly to the target location (this is a hack)
+ */
+#define PROJECT_JUMP       0x00000001
+
+/** @def PROJECT_BEAM
+ * @note Work as a beam weapon (affect every grid passed through)
+ */
+#define PROJECT_BEAM       0x00000002
+
+/** @def PROJECT_THRU
+ * @note Continue "through" the target (used for "bolts"/"beams")
+ */
+#define PROJECT_THRU       0x00000004
+
+/** @def PROJECT_STOP
+ * @note Stop as soon as we hit a monster (used for "bolts")
+ */
+#define PROJECT_STOP       0x00000008
+
+/** @def PROJECT_GRID
+ * @note Affect each grid in the "blast area" in some way
+ */
+#define PROJECT_GRID       0x00000010
+
+/** @def PROJECT_ITEM
+ * @note Affect each object in the "blast area" in some way
+ */
+#define PROJECT_ITEM       0x00000020
+
+/** @def PROJECT_KILL
+ * @note Affect each monster in the "blast area" in some way
+ */
+#define PROJECT_KILL       0x00000040
+
+/** @def PROJECT_HIDE
+ * @note Hack -- disable "visual" feedback from projection
+ */
+#define PROJECT_HIDE       0x00000080
+
+/** @def PROJECT_HIDE_BLAST
+ * @note Hack -- disable "visual" feedback from projection of blast area
+ */
+#define PROJECT_HIDE_BLAST 	0x00080000
+
+/** @def PROJECT_VIEWABLE
+ * @note Affect monsters in LOS
+ */
+#define PROJECT_VIEWABLE   0x00000100
+
+/** @def PROJECT_METEOR_SHOWER
+ * @note Affect random grids
+ */
+#define PROJECT_METEOR_SHOWER 0x00000200
+
+/** @def PROJECT_BLAST
+ * @note Like Mega_blast, but will only affect viewable grids
+ */
+#define PROJECT_BLAST      0x00000400
+
+/** @def PROJECT_PANEL
+ * @note Affect everything in the panel.
+ */
+#define PROJECT_PANEL      0x00000800
+
+/** @def PROJECT_ALL
+ * @note Affect every single grid.
+ */
+#define PROJECT_ALL	0x00001000
+
+/** @def PROJECT_WALL
+ * @note Continue "through" the walls
+ */
+#define PROJECT_WALL       0x00002000
+
+/** @def PROJECT_MANA_PATH
+ * @note Follow a mana path.
+ */
+#define PROJECT_MANA_PATH  0x00004000
+
+/** @def PROJECT_ABSORB_MANA
+ * @note The spell increase in power as it absord grid's mana.
+ */
+#define PROJECT_ABSORB_MANA 0x00008000
+
+/** @def PROJECT_STAY */
+#define PROJECT_STAY       0x00010000
+
+/** @def PROJECT_CASTER
+ * @note Caster can be affected by his/her own spells
+ */
+#define PROJECT_CASTER     	0x00020000
+
+/** @def PROJECT_CONE
+ * @note Creates a cone of projection instead of a ball
+ */
+#define PROJECT_CONE       	0x00040000
+
+/** @def PROJECT_NO_REFLECT
+ * @note Not affected by reflection
+ */
+#define PROJECT_NO_REFLECT 	0x00100000
+
+/** @def PROJECT_SILENT
+ * @note Monsters wont scream
+ */
+#define PROJECT_SILENT     	0x00200000
+
+/** @def PROJECT_NO_RADIUS_DAM
+ * @note Do not reduce power with radius
+ */
+#define PROJECT_NO_RADIUS_DAM   0x00400000
+
+/** @} */
+
+/** @var project_range
+ * @brief Number
+ * @note The max range for the spells, or -1 for default(16)
+ */
+extern s32b project_range;
+
+/** @var project_time
+ * @brief Number
+ * @note The length of time a spell effect exists.
+ */
+extern s32b project_time;
+
+/** @var project_time_speed
+ * @brief Number
+ * @note The speed of a lasting effect spell
+ */
+extern s16b project_time_speed;
+
+/** @var project_time_effect
+ * @brief Number
+ * @note Flags definingthe timed effect
+ */
+extern s32b project_time_effect;
+
+/** @fn teleport_player_directed(s32b rad, s32b dir)
+ * @brief Teleport a player up to "rad" grids away roughly in "dir"
+ * direction.
+ * @param rad Number \n rad must not exceed 200. The distance teleported is
+ * at least a quarter of rad.
+ * @brief Distance
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @return void
+ * @note
+ * Teleport player, using a distance and a direction as a rough guide.
+ * This function is not at all obsessive about correctness.
+ * This function allows teleporting into vaults (!)
+ * @note (see file spells1.c)
+ */
+extern void teleport_player_directed(s32b rad, s32b dir);
+
+/** @fn teleport_away(s32b m_idx, s32b dis)
+ * @brief Teleport monster indicated by "m_idx" up to "dis" grids away.
+ * @param m_idx Number \n m_idx is the index of the monster in m_list[].
+ * @brief Monster index
+ * @param dis Number \n dis must not exceed 200. The distance teleported
+ * is a minimum of a quarter of "dis".
+ * @brief Distance
+ * @return void
+ * @note
+ * Teleport a monster, normally up to "dis" grids away.
+ * Attempt to move the monster at least "dis/2" grids away.
+ * But allow variation to prevent infinite loops.
+ * @note (see file spells1.c)
+ */
+extern void teleport_away(s32b m_idx, s32b dis);
+
+/** @fn teleport_player(s32b dis)
+ * @brief Teleport player up to "dis" grids away.
+ * @param dis Number \n dis must not exceed 200. The distance teleported
+ * is a minimum of a quarter of dis.
+ * @brief Distance
+ * @return void
+ * @note
+ * Teleport the player to a location up to "dis" grids away.
+ * If no such spaces are readily available, the distance may increase.
+ * Try very hard to move the player at least a quarter that distance.
+ * @note (see file spells1.c)
+ */
+extern void teleport_player(s32b dis);
+
+/** @fn teleport_player_to(s32b ny, s32b nx)
+ * @brief Teleport player to a grid near coordinate ("ny", "nx").
+ * @param ny Number \n ny is the y co-ordinate of the location.
+ * @brief Y coordinate
+ * @param nx Number \n nx is the x co-ordinate of the location.
+ * @brief X coordinate
+ * @return void
+ * @note
+ * Teleport player to a grid near the given location
+ * This function is slightly obsessive about correctness.
+ * This function allows teleporting into vaults (!)
+ * If the location is empty, the player goes there, otherwise they go to
+ * a grid as close as possible to the location.
+ * @note (see file spells1.c)
+ */
+extern void teleport_player_to(s32b ny, s32b nx);
+
+/** @fn teleport_monster_to(s32b m_idx, s32b ny, s32b nx)
+ * @brief Teleport monster indicated by "m_idx" to a grid near coordinate
+ * ("ny", "nx").
+ * @param m_idx Number \n m_idx is the index of the monster in m_list[].
+ * @brief Monster index
+ * @param ny Number \n ny is the y co-ordinate of the location.
+ * @brief Y coordinate
+ * @param nx Number \n nx is the x co-ordinate of the location.
+ * @brief X coordinate
+ * @return void
+ * @note
+ * Teleport a monster to a grid near the given location
+ * This function is slightly obsessive about correctness.
+ * If the location is empty, the monster goes there, otherwise they go to
+ * a grid as close as possible to the location.
+ * @note (see file spells1.c)
+ */
+extern void teleport_monster_to(s32b m_idx, s32b ny, s32b nx);
+
+/** @fn teleport_player_level(void)
+ * @brief Teleport the player one level up or down at random.
+ * @return void
+ * @note
+ * Teleport the player one level up or down (random when legal)
+ * @note (see file spells1.c)
+ */
+extern void teleport_player_level(void);
+
+/** @fn fetch(s32b dir, s32b wgt, bool require_los)
+ * @brief Fetch an item in direction "dir" with weight "wgt" possibly not in
+ * line of sight.
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param wgt Number \n maximum weight of object.
+ * @brief Weight
+ * @param require_los Boolean \n TRUE if line of sight is required, otherwise
+ * FALSE.
+ * @brief Require-line-of-sight flag
+ * @return void
+ * @note
+ * Fetch an item (teleport it right underneath the caster)
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * Fetch will fail if player is standing on something, or if the object is
+ * too far away, or if require_los is TRUE and player does not have line
+ * of sight to the object, or the object is too heavy. Otherwise the
+ * object appears at the player's feet (same grid as player).
+ * @note (see file cmd5.c)
+ */
+extern void fetch(s32b dir, s32b wgt, bool require_los);
+
+/** @fn recall_player(s32b d, s32b f)
+ * @brief Recall the player to town (if in dungeon) or dungeon (if in town).
+ * @param d Number \n Random time interval
+ * @brief Dice
+ * @param f Number \n Fixed time interval
+ * @brief Fixed
+ * @return void
+ * @note (see file spells1.c)
+ */
+extern void recall_player(s32b d, s32b f);
+
+/** @fn project(s32b who, s32b rad, s32b y, s32b x, s32b dam, s32b typ, s32b flg, s32b max_range)
+ * @brief Generate a beam/bolt/ball with properties "flg" starting from "who"
+ * with a radius of "rad" at target grid "y,x" for "dam" points of "typ"
+ * damage.
+ * @param who Number \n who is > 0 (index of monster in m_list[]), < 0 and
+ * not -100 or -101 (player), -100 or -101 (trap).
+ * @brief Source
+ * @param rad Number \n rad is 0 for a beam/bolt and 1-9 for a ball.
+ * @brief Radius
+ * @param y Number \n y is the y coordinate of the target grid.
+ * @brief Y-coordinate
+ * @param x Number \n x is the x co-ordinate of the target grid.
+ * @brief X-coordinate
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param flg Number \n flg is the projection effect (PROJECT field).
+ * @brief Properties flag
+ * @param max_range Number \n max_range is the maximun range for the effect(or -1 for default).
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Generic "beam"/"bolt"/"ball" projection routine.
+ * Input:
+ *   who: Index of "source" monster (negative for "player")
+ *	jk -- -2 for traps, only used with project_jump
+ *   rad: Radius of explosion (0 = beam/bolt, 1 to 9 = ball)
+ *   y,x: Target location (or location to travel "towards")
+ *   dam: Base damage roll to apply to affected monsters (or player)
+ *   typ: Type of damage to apply to monsters (and objects)
+ *   flg: Extra bit flags (see PROJECT_xxxx in "defines.h")
+ * Return:
+ *   TRUE if any "effects" of the projection were observed, else FALSE
+ * Allows a monster (or player) to project a beam/bolt/ball of a given kind
+ * towards a given location (optionally passing over the heads of interposing
+ * monsters), and have it do a given amount of damage to the monsters (and
+ * optionally objects) within the given radius of the final location.
+ * A "bolt" travels from source to target and affects only the target grid.
+ * A "beam" travels from source to target, affecting all grids passed through.
+ * A "ball" travels from source to the target, exploding at the target, and
+ * affecting everything within the given radius of the target location.
+ * Traditionally, a "bolt" does not affect anything on the ground, and does
+ * not pass over the heads of interposing monsters, much like a traditional
+ * missile, and will "stop" abruptly at the "target" even if no monster is
+ * positioned there, while a "ball", on the other hand, passes over the heads
+ * of monsters between the source and target, and affects everything except
+ * the source monster which lies within the final radius, while a "beam"
+ * affects every monster between the source and target, except for the casting
+ * monster (or player), and rarely affects things on the ground.
+ * Two special flags allow us to use this function in special ways, the
+ * "PROJECT_HIDE" flag allows us to perform "invisible" projections, while
+ * the "PROJECT_JUMP" flag allows us to affect a specific grid, without
+ * actually projecting from the source monster (or player).
+ * The player will only get "experience" for monsters killed by himself
+ * Unique monsters can only be destroyed by attacks from the player
+ * Only 256 grids can be affected per projection, limiting the effective
+ * "radius" of standard ball attacks to nine units (diameter nineteen).
+ * One can project in a given "direction" by combining PROJECT_THRU with small
+ * offsets to the initial location (see "line_spell()"), or by calculating
+ * "virtual targets" far away from the player.
+ * One can also use PROJECT_THRU to send a beam/bolt along an angled path,
+ * continuing until it actually hits something (useful for "stone to mud").
+ * Bolts and Beams explode INSIDE walls, so that they can destroy doors.
+ * Balls must explode BEFORE hitting walls, or they would affect monsters
+ * on both sides of a wall.  Some bug reports indicate that this is still
+ * happening in 2.7.8 for Windows, though it appears to be impossible.
+ * We "pre-calculate" the blast area only in part for efficiency.
+ * More importantly, this lets us do "explosions" from the "inside" out.
+ * This results in a more logical distribution of "blast" treasure.
+ * It also produces a better (in my opinion) animation of the explosion.
+ * It could be (but is not) used to have the treasure dropped by monsters
+ * in the middle of the explosion fall "outwards", and then be damaged by
+ * the blast as it spreads outwards towards the treasure drop location.
+ * Walls and doors are included in the blast area, so that they can be
+ * "burned" or "melted" in later versions.
+ * This algorithm is intended to maximise simplicity, not necessarily
+ * efficiency, since this function is not a bottleneck in the code.
+ * We apply the blast effect from ground zero outwards, in several passes,
+ * first affecting features, then objects, then monsters, then the player.
+ * This allows walls to be removed before checking the object or monster
+ * in the wall, and protects objects which are dropped by monsters killed
+ * in the blast, and allows the player to see all affects before he is
+ * killed or teleported away.  The semantics of this method are open to
+ * various interpretations, but they seem to work well in practice.
+ * We process the blast area from ground-zero outwards to allow for better
+ * distribution of treasure dropped by monsters, and because it provides a
+ * pleasing visual effect at low cost.
+ * Note that the damage done by "ball" explosions decreases with distance.
+ * This decrease is rapid, grids at radius "dist" take "1/dist" damage.
+ * Notice the "napalm" effect of "beam" weapons.  First they "project" to
+ * the target, and then the damage "flows" along this beam of destruction.
+ * The damage at every grid is the same as at the "centre" of a "ball"
+ * explosion, since the "beam" grids are treated as if they ARE at the
+ * centre of a "ball" explosion.
+ * Currently, specifying "beam" plus "ball" means that locations which are
+ * covered by the initial "beam", and also covered by the final "ball", except
+ * for the final grid (the epicentre of the ball), will be "hit twice", once
+ * by the initial beam, and once by the exploding ball.  For the grid right
+ * next to the epicentre, this results in 150% damage being done.  The centre
+ * does not have this problem, for the same reason the final grid in a "beam"
+ * plus "bolt" does not -- it is explicitly removed.  Simply removing "beam"
+ * grids which are covered by the "ball" will NOT work, as then they will
+ * receive LESS damage than they should.  Do not combine "beam" with "ball".
+ * The array "gy[],gx[]" with current size "grids" is used to hold the
+ * collected locations of all grids in the "blast area" plus "beam path".
+ * Note the rather complex usage of the "gm[]" array.  First, gm[0] is always
+ * zero.  Second, for N>1, gm[N] is always the index (in gy[],gx[]) of the
+ * first blast grid (see above) with radius "N" from the blast centre.  Note
+ * that only the first gm[1] grids in the blast area thus take full damage.
+ * Also, note that gm[rad+1] is always equal to "grids", which is the total
+ * number of blast grids.
+ * Note that once the projection is complete, (y2,x2) holds the final location
+ * of bolts/beams, and the "epicentre" of balls.
+ * Note also that "rad" specifies the "inclusive" radius of projection blast,
+ * so that a "rad" of "one" actually covers 5 or 9 grids, depending on the
+ * implementation of the "distance" function.  Also, a bolt can be properly
+ * viewed as a "ball" with a "rad" of "zero".
+ * Note that if no "target" is reached before the beam/bolt/ball travels the
+ * maximum distance allowed (MAX_RANGE), no "blast" will be induced.  This
+ * may be relevant even for bolts, since they have a "1x1" mini-blast.
+ * Note that for consistency, we "pretend" that the bolt actually takes "time"
+ * to move from point A to point B, even if the player cannot see part of the
+ * projection path.  Note that in general, the player will *always* see part
+ * of the path, since it either starts at the player or ends on the player.
+ * Hack -- we assume that every "projection" is "self-illuminating".
+ * Hack -- when only a single monster is affected, we automatically track
+ * (and recall) that monster, unless "PROJECT_JUMP" is used.
+ * Note that all projections now "explode" at their final destination, even
+ * if they were being projected at a more distant destination.  This means
+ * that "ball" spells will *always* explode.
+ * Note that we must call "handle_stuff()" after affecting terrain features
+ * in the blast radius, in case the "illumination" of the grid was changed,
+ * and "update_view()" and "update_monsters()" need to be called.
+ * @note (see file spells1.c)
+ */
+extern bool project(s32b who, s32b rad, s32b y, s32b x, s32b dam, s32b typ, s32b flg, s32b max_range = -1);
+
+/** @fn corrupt_player(void)
+ * @brief Swap two of the player's stats at random.
+ * @return void
+ * @note (see file spells1.c)
+ */
+extern void corrupt_player(void);
+
+/** @fn grow_things(s16b type, s32b rad)
+ * @brief Grow "type" things within "rad" distance of the player.
+ * @param type Number \n type of thing to grow (FEAT field).
+ * @brief Type
+ * @param rad Number \n rad is the radius of the area where things may grow.
+ * @brief Radius
+ * @return void
+ * @note
+ * Grow things
+ * Up to (rad * (rad + 11)) things can be grown around the player. The
+ * grids must support growth.
+ * @note (see file spells2.c)
+ */
+extern void grow_things(s16b type, s32b rad);
+
+/** @fn grow_grass(s32b rad)
+ * @brief Grow grass within "rad" distance of the player.
+ * @param rad Number \n rad is the radius of the area where grass may grow.
+ * @brief Radius
+ * @return void
+ * @note
+ * Grow grass
+ * Up to (rad * (rad + 11)) grass can be grown around the player. The
+ * grids must support growth.
+ * @note (see file spells2.c)
+ */
+extern void grow_grass(s32b rad);
+
+/** @def STAT_DEC_TEMPORARY
+ * @brief Temporary decrease the stat
+ */
+#define STAT_DEC_TEMPORARY 1
+
+/** @def STAT_DEC_NORMAL
+ * @brief Decrease the stat(can be restored)
+ */
+#define STAT_DEC_NORMAL 2
+
+/** @def STAT_DEC_PERMANENT
+ * @brief Decrease the stat(cannot be restored)
+ */
+#define STAT_DEC_PERMANENT 3
+
+/** @fn inc_stat(s32b stat)
+ * @brief Increases a stat by one randomized level
+ * @return Boolean
+ */
+extern bool inc_stat(s32b stat);
+
+/** @fn dec_stat(s32b stat, s32b amount, s32b mode)
+ * @brief Decreases a stat by an amount indended to vary from 0 to 100 percent.
+ * @return Boolean
+ */
+extern bool dec_stat(s32b stat, s32b amount, s32b mode);
+
+/** @fn res_stat(s32b stat, bool full)
+ * @brief Restores a stat
+ * @return Boolean
+ */
+extern bool res_stat(s32b stat, bool full);
+
+/** @fn do_dec_stat(s32b stat, s32b mode)
+ * @brief Attempt to reduce the player's "stat" statistic by a point.
+ * @param stat Number \n stat is the statistic
+ * @brief Statistic
+ * @param mode Number \n mode is the type of decrease: temporary, normal,
+ * or permanent
+ * @brief Mode
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Lose a "point"
+ * @note (see file spells2.c)
+ */
+extern bool do_dec_stat(s32b stat, s32b mode);
+
+/** @fn do_res_stat(s32b stat, bool full)
+ * @brief Restore the player's "stat" statistic.
+ * @param stat Number \n stat is the statistic.
+ * @brief Statistic
+ * @param full Boolean \n TRUE if full restore is required, otherwise FALSE.
+ * @brief Full restore flag
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Restore lost "points" in a stat
+ * @note (see file spells2.c)
+ */
+extern bool do_res_stat(s32b stat, bool full);
+
+/** @fn do_inc_stat(s32b stat)
+ * @brief Increase the player's "stat" statistic by a point.
+ * @param stat Number \n stat is the statistic.
+ * @brief Statistic
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Gain a "point" in a stat
+ * @note (see file spells2.c)
+ */
+extern bool do_inc_stat(s32b stat);
+
+/** @fn identify_pack(void)
+ * @brief Identify all items in the inventory.
+ * @return void
+ * @note
+ * Identify everything being carried.
+ * Done by a potion of "self knowledge".
+ * @note (see file spells2.c)
+ */
+extern void identify_pack(void);
+
+/** @fn remove_curse(void)
+ * @brief Remove all curses except for heavy curses.
+ * @return Boolean \n TRUE if at least one item was uncursed, otherwise FALSE.
+ * @note
+ * Remove most curses
+ * There is a 1 in (55 - level) chance of reversing the curse effects for
+ * items which are not artifacts. For example, a Ring of Damage (-15) will
+ * become a Ring of Damage (+15).
+ * @note (see file spells2.c)
+ */
+extern bool remove_curse(void);
+
+/** @fn remove_all_curse(void)
+ * @brief Remove all curses including heavy curses.
+ * @return Boolean \n TRUE if at least one item was uncursed, otherwise FALSE.
+ * @note
+ * Remove all curses
+ * There is a 1 in (55 - level) chance of reversing the curse effects for
+ * items which are not artifacts. For example, a Ring of Damage (-15) will
+ * become a Ring of Damage (+15).
+ * @note (see file spells2.c)
+ */
+extern bool remove_all_curse(void);
+
+/** @fn restore_level(void)
+ * @brief Restore all drained experience points (if any).
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Restores any drained experience
+ * @note (see file spells2.c)
+ */
+extern bool restore_level(void);
+
+/** @fn self_knowledge(PHYSFS_file *fff=NULL)
+ * @brief Show all attributes including racial powers, mutations, and
+ * equipment effects.
+ * @param *fff PHYSFS_file \n write info to screen if fff is NULL,
+ * otherwise write info to file fff.
+ * @brief Output file
+ * @return void
+ * @note
+ * self-knowledge... idea from nethack.  Useful for determining powers and
+ * resistances of items.  It saves the screen, clears it, then starts listing
+ * attributes, a screenful at a time.  (There are a LOT of attributes to
+ * list.  It will probably take 2 or 3 screens for a powerful character whose
+ * using several artifacts...) -CFT
+ * It is now a lot more efficient. -BEN-
+ * See also "identify_fully()".
+ * XXX XXX XXX Use the "show_file()" method, perhaps.
+ * @note (see file spells2.c)
+ */
+extern void self_knowledge(PHYSFS_file *fff=NULL);
+
+/** @fn lose_all_info(void)
+ * @brief Forget about objects and the map.
+ * @return Boolean \n TRUE (always).
+ * @note
+ * Forget everything
+ * @note (see file spells2.c)
+ */
+extern bool lose_all_info(void);
+
+/** @fn tgt_pt (s32b *x=0, s32b *y=0)
+ * @brief Set a target point
+ * @param *x Number
+ * @brief X-coordinate
+ * @param *y Number
+ * @brief Y-coordinate
+ * @return Boolean \n True if a target was selected, otherwise FALSE.
+ * @return *x Number \n X-coordinate of target.
+ * @return *y Number \n Y-coordinate of target.
+ * @note
+ * Allow the user to move the cursor around the screen to select a target.
+ * The user must press the space key to set the target.
+ * @note (see file xtra2.c)
+ */
+extern bool tgt_pt (s32b *x=0, s32b *y=0);
+
+/** @fn tgt_pt_prompt (s32b *x=0, s32b *y=0)
+ * @brief Set a target point using a custom prompt.
+ * @param prompt String
+ * @brief Prompt to use.
+ * @param *x Number
+ * @brief X-coordinate
+ * @param *y Number
+ * @brief Y-coordinate
+ * @return Boolean \n True if a target was selected, otherwise FALSE.
+ * @return *x Number \n X-coordinate of target.
+ * @return *y Number \n Y-coordinate of target.
+ * @note
+ * Allow the user to move the cursor around the screen to select a target.
+ * The user must press the space key to set the target.
+ * @note (see file xtra2.c)
+ */
+extern bool tgt_pt_prompt (cptr prompt, s32b *x=0, s32b *y=0);
+
+/** @fn create_artifact(object_type *o_ptr, bool a_scroll, bool get_name)
+ * @brief Create an artifact from object "o_ptr".
+ * @param *o_ptr object_type \n object to become an artifact
+ * @brief Object
+ * @param a_scroll Boolean \n Is a scroll used to create the artifact?
+ * TRUE if the artifact is created by reading a scroll.
+ * @brief Use scroll?
+ * @param get_name Boolean \n Get a name for the artifact?
+ * TRUE if the artifact is to be named by the player (if a_scroll is true) or
+ * created randomly (a_scroll is false), or FALSE if an inscription is used.
+ * @brief Get name?
+ * @return Boolean \n TRUE (always).
+ * @return *o_ptr object_type \n The artifact.
+ * @note (see file randart.c)
+ */
+extern bool create_artifact(object_type *o_ptr, bool a_scroll, bool get_name);
+
+/** @fn ident_spell(void)
+ * @brief Identify an object in the inventory (or on the floor).
+ * @return Boolean \n TRUE if object is identified, otherwise FALSE.
+ * @note
+ * Identify an object in the inventory (or on the floor).
+ * This routine does *not* automatically combine objects.
+ * @note (see file spells2.c)
+ */
+extern bool ident_spell(void);
+
+/** @fn identify_fully(void)
+ * @brief Fully "identify" an object in the inventory (or on the floor).
+ * @return Boolean \n TRUE if object is identified, otherwise FALSE.
+ * @note
+ * Fully "identify" an object in the inventory  -BEN-
+ * @note (see file spells2.c)
+ */
+extern bool identify_fully(void);
+
+/** @fn aggravate_monsters(s32b who)
+ * @brief Aggravate monsters near player, originating from "who".
+ * @param who Number \n who is the index of monster in m_list[]
+ * (1 if it is the player) which triggers the aggravation.
+ * @brief Source
+ * @return void
+ * @note
+ * Wake up all monsters, and speed up "los" monsters.
+ * @note (see file spells2.c)
+ */
+extern void aggravate_monsters(s32b who);
+
+/** @fn wake_monsters(s32b y, s32b x, s32b rad, u32b power);
+ * @brief Wake monsters near player, without aggravating them.
+ * @param y Number \n Y-coordinate
+ * @param x Number \n X-coordinate
+ * @param rad Number \n Radius around coordinates that is affected.
+ * @param power Number
+ * @brief If power is 0, wakes up all monsters, otherwise decrease
+ * monsters sleep counter.
+ */
+extern void wake_monsters(s32b y, s32b x, s32b rad, u32b power = 0);
+
+/** @fn genocide_aux(bool player_cast, char typ)
+ * @brief Genocide a monster race.
+ * @param player_cast Boolean \n player_cast is true if the player cast the
+ * spell so the player can take damage.
+ * @param typ Char \n typ is the letter of the genocided monsters
+ * @return Boolean \n TRUE if genocide was cast, otherwise FALSE.
+ * @note
+ * Genocide will not work on DF2_NO_GENO dungeon levels, or on "fated to
+ * die" levels.
+ * The player gets 4 points of damage per monster genocided.
+ * @note (see file spells2.c)
+ */
+extern bool genocide_aux(bool player_cast, char typ);
+
+/** @fn genocide(bool player_cast)
+ * @brief Genocide a monster race.
+ * @param player_cast Boolean \n player_cast is true if the player cast the
+ * spell so the player can take damage.
+ * @brief Player cast spell?
+ * @return Boolean \n TRUE if genocide was cast, otherwise FALSE.
+ * @note
+ * Genocide will not work on DF2_NO_GENO dungeon levels, or on "fated to
+ * die" levels.
+ * The player gets 4 points of damage per monster genocided.
+ * @note (see file spells2.c)
+ */
+extern bool genocide(bool player_cast);
+
+/** @fn mass_genocide(bool player_cast)
+ * @brief Delete all nearby (non-unique) monsters.
+ * @param player_cast Boolean \n player_cast is true if the player cast the
+ * spell so the player can take damage.
+ * @brief Player cast spell?
+ * @return Boolean \n TRUE (always).
+ * @note
+ * Genocide will not work on DF2_NO_GENO dungeon levels, or on "fated to
+ * die" levels.
+ * The player gets 3 points of damage per monster genocided.
+ * @note (see file spells2.c)
+ */
+extern bool mass_genocide(bool player_cast);
+
+/** @fn probing(void)
+ * @brief Probe all nearby monsters.
+ * @return Boolean \n TRUE if probe was successful, otherwise FALSE.
+ * @note (see file spells2.c)
+ */
+extern bool probing(void);
+
+/** @fn wipe(s32b y1, s32b x1, s32b r)
+ * @brief Delete monsters and objects from an area of the dungeon centred at
+ * grid "y1,x1" for a radius "r".
+ * @param y1 Number \n Y-coordinate of dungeon grid.
+ * @brief Y-coordinate
+ * @param x1 Number \n X-coordinate of dungeon grid.
+ * @brief X-coordinate
+ * @param r Number \n rad is the radius of circle of detection.
+ * @brief Radius
+ * @return void
+ * @note
+ * Wipe -- Empties a part of the dungeon
+ * This does not work on special levels or quests. The player may become
+ * blinded. The player forgets the affected area and it becomes dark.
+ * All grids become floor.
+ * @note (see file spells2.c)
+ */
+extern void wipe(s32b y1, s32b x1, s32b r);
+
+/** @fn destroy_area(s32b y1, s32b x1, s32b r, bool full, bool bypass)
+ * @brief Delete monsters and objects from an area of the dungeon centred at
+ * grid "y1,x1" for a radius "r".
+ * @param y1 Number \n Y-coordinate of dungeon grid.
+ * @brief Y-coordinate
+ * @param x1 Number \n X-coordinate of dungeon grid.
+ * @brief X-coordinate
+ * @param r Number \n rad is the radius of circle of detection.
+ * @brief Radius
+ * @param full Boolean \n unused
+ * @brief *Unused*
+ * @param bypass Boolean \n TRUE if quest levels are not destroyed, otherwise
+ * FALSE.
+ * @brief Exempt quest levels?
+ * @return void
+ * @note
+ * The spell of destruction
+ * This spell "deletes" monsters (instead of "killing" them).
+ * Later we may use one function for both "destruction" and
+ * "earthquake" by using the "full" to select "destruction".
+ * This does not work on special levels. This does not work on quests if the
+ * bypass flag is set. The epicentre is NOT affected. The player may become
+ * blinded. The player forgets the affected area and it becomes dark. The
+ * grids can become granite, quartz, magma, or floor.
+ * @note (see file spells2.c)
+ */
+extern void destroy_area(s32b y1, s32b x1, s32b r, bool full, bool bypass);
+
+/** @fn earthquake(s32b cy, s32b cx, s32b r)
+ * @brief Create an earthquake centred on grid "cy,cx" with a radius of "r".
+ * @param cy Number \n Y-coordinate of dungeon grid.
+ * @brief Y-coordinate
+ * @param cx Number \n X-coordinate of dungeon grid.
+ * @brief X-coordinate
+ * @param r Number \n rad is the radius of circle of detection.
+ * @brief Radius
+ * @return void
+ * @note
+ * Induce an "earthquake" of the given radius at the given location.
+ * This will turn some walls into floors and some floors into walls.
+ * The player will take damage and "jump" into a safe grid if possible,
+ * otherwise, he will "tunnel" through the rubble instantaneously.
+ * Monsters will take damage, and "jump" into a safe grid if possible,
+ * otherwise they will be "buried" in the rubble, disappearing from
+ * the level in the same way that they do when genocided.
+ * Note that thus the player and monsters (except eaters of walls and
+ * passers through walls) will never occupy the same grid as a wall.
+ * Note that as of now (2.7.8) no monster may occupy a "wall" grid, even
+ * for a single turn, unless that monster can pass_walls or kill_walls.
+ * This has allowed massive simplification of the "monster" code.
+ * This does not work on quest levels. The epicentre is NOT affected.
+ * Only about 15% of the grids are affected. The player takes 300 points
+ * of damage if they can't be moved to a safe grid, otherwise damage is
+ * from 10 to 40 points. The player forgets the affected area and it
+ * becomes dark. The grids can become granite, quartz, magma, or floor.
+ * @note (see file spells2.c)
+ */
+extern void earthquake(s32b cy, s32b cx, s32b r);
+
+/** @fn lite_room(s32b y1, s32b x1)
+ * @brief Lite room containing grid "y1,x1".
+ * @param y1 Number \n Y-coordinate of dungeon grid.
+ * @brief Y-coordinate
+ * @param x1 Number \n X-coordinate of dungeon grid.
+ * @brief X-coordinate
+ * @return void
+ * @note
+ * Illuminate any room containing the given location.
+ * @note (see file spells2.c)
+ */
+extern void lite_room(s32b y1, s32b x1);
+
+/** @fn unlite_room(s32b y1, s32b x1)
+ * @brief Unlite room containing grid "y1,x1".
+ * @param y1 Number \n Y-coordinate of dungeon grid.
+ * @brief Y-coordinate
+ * @param x1 Number \n X-coordinate of dungeon grid.
+ * @brief X-coordinate
+ * @return void
+ * @note
+ * Darken all rooms containing the given location.
+ * @note (see file spells2.c)
+ */
+extern void unlite_room(s32b y1, s32b x1);
+
+/** @fn fire_ball_beam(s32b typ, s32b dir, s32b dam, s32b rad, s32b max_range = -1)
+ * @brief Generate a ball spell of type "typ" with radius "rad" aimed in
+ * direction "dir" for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param rad Number \n rad is 0 for a beam/bolt and 1-16 for a ball.
+ * @brief Radius
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a ball-beamed spell
+ * Stop if we hit a monster, act as a "ball"
+ * Allow "target" mode to pass over monsters
+ * Affect grids, objects, and monsters
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * Any radius >16 is treated as 16.
+ * @note (see file spells2.c)
+ */
+extern bool fire_ball_beam(s32b typ, s32b dir, s32b dam, s32b rad, s32b max_range = -1);
+
+/** @fn make_wish(void)
+ * @brief  Allow the player to make a wish.
+ * @return void
+ * @note (see file xtra2.c)
+ */
+extern void make_wish(void);
+
+/** @fn fire_wave(s32b typ, s32b dir, s32b dam, s32b rad, s32b time, s32b speed, s32b eff, s32b max_range = -1)
+ * @brief Generate a ball spell of type "typ" with radius "rad" and effect
+ * "eff" lasting "time" turns aimed in direction "dir" for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param rad Number \n rad is 0 for a beam/bolt and 1-16 for a ball.
+ * @brief Radius
+ * @param time Number \n time is the number of turns the spell lasts.
+ * @brief Duration
+ * @param speed Number \n speed is the speed the spell will move at.
+ * @brief Speed
+ * @param eff Number \n eff is the spell effect (EFF field)
+ * @brief Effect
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a wave spell
+ * Stop if we hit a monster, act as a "ball"
+ * Allow "target" mode to pass over monsters
+ * Affect grids, objects, and monsters
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * Any radius >16 is treated as 16.
+ * @note (see file spells2.c)
+ */
+extern bool fire_wave(s32b typ, s32b dir, s32b dam, s32b rad, s32b time, s32b speed=0, s32b eff, s32b max_range = -1);
+
+/** @name Spell Effect Flags
+ * @brief Effect of spell
+ * @{ */
+/** @def EFF_WAVE
+ * @note A circle whose radius increase
+ */
+#define EFF_WAVE		0x00000001
+
+/** @def EFF_LAST
+ * @note The wave lasts
+ */
+#define EFF_LAST		0x00000002
+
+/** @def EFF_STORM
+ * @note the effect follows the player
+ */
+#define EFF_STORM	       0x00000004
+
+/** @name Spell Effect Direction Flags
+ * @brief Direction of the spell
+ * @{ */
+#define EFF_DIR1		0x00000008      /* Directed effect */
+#define EFF_DIR2		0x00000010      /* Directed effect */
+#define EFF_DIR3		0x00000020      /* Directed effect */
+#define EFF_DIR4		0x00000040      /* Directed effect */
+#define EFF_DIR6		0x00000080      /* Directed effect */
+#define EFF_DIR7		0x00000100      /* Directed effect */
+#define EFF_DIR8		0x00000200      /* Directed effect */
+#define EFF_DIR9		0x00000400      /* Directed effect */
+/** @} */
+/** @} */
+
+/** @fn fire_cloud(s32b typ, s32b dir, s32b dam, s32b rad, s32b time, s32b max_range = -1)
+ * @brief Generate a ball spell of type "typ" with radius "rad" lasting
+ * "time" turns aimed in direction "dir" for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param rad Number \n rad is 0 for a beam/bolt and 1-16 for a ball.
+ * @brief Radius
+ * @param time Number \n time is the number of turns the spell lasts.
+ * @brief Duration
+ * @param speed Number \n speed is the speed the spell will move at.
+ * @brief Speed
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a cloud spell
+ * Stop if we hit a monster, act as a "ball"
+ * Allow "target" mode to pass over monsters
+ * Affect grids, objects, and monsters
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * Any radius >16 is treated as 16.
+ * @note (see file spells2.c)
+ */
+extern bool fire_cloud(s32b typ, s32b dir, s32b dam, s32b rad, s32b time, s32b speed=0, s32b max_range = -1);
+
+/** @fn fire_wall(s32b typ, s32b dir, s32b dam, s32b time, s32b max_range = -1)
+ * @brief Generate a beam spell of type "typ" lasting "time" turns aimed in
+ * direction "dir" for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param time Number \n time is the number of turns the spell lasts.
+ * @brief Duration
+ * @param speed Number \n speed is the speed the spell will move at.
+ * @brief Speed
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a persistant beam spell
+ * Pass through monsters, as a "beam"
+ * Affect monsters (not grids or objects)
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * @note (see file spells2.c)
+ */
+extern bool fire_wall(s32b typ, s32b dir, s32b dam, s32b time, s32b speed=0, s32b max_range = -1);
+
+/** @fn fire_ball(s32b typ, s32b dir, s32b dam, s32b rad, s32b max_range = -1)
+ * @brief Generate a ball spell of type "typ" with radius "rad" aimed in
+ * direction "dir" for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param rad Number \n rad is 0 for a beam/bolt and 1-16 for a ball.
+ * @brief Radius
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a ball spell
+ * Stop if we hit a monster, act as a "ball"
+ * Allow "target" mode to pass over monsters
+ * Affect grids, objects, and monsters
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * @note (see file spells2.c)
+ */
+extern bool fire_ball(s32b typ, s32b dir, s32b dam, s32b rad, s32b max_range = -1);
+
+/** @fn fire_cone(s32b typ, s32b dir, s32b dam, s32b rad, s32b max_range = -1)
+ * @brief Generate a cone spell of type "typ" with radius "rad" aimed in
+ * direction "dir" for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param rad Number \n rad is 0 for a beam/bolt and 1-16 for a ball.
+ * @brief Radius
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a ball spell
+ * Stop if we hit a monster, act as a "ball"
+ * Allow "target" mode to pass over monsters
+ * Affect grids, objects, and monsters
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * @note (see file spells2.c)
+ */
+extern bool fire_cone(s32b typ, s32b dir, s32b dam, s32b rad, s32b max_range = -1);
+
+/** @fn fire_bolt(s32b typ, s32b dir, s32b dam, s32b max_range = -1)
+ * @brief Generate a bolt spell of type "typ" aimed in direction "dir"
+ * for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a bolt spell
+ * Stop if we hit a monster, as a "bolt"
+ * Affect monsters (not grids or objects)
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * @note (see file spells2.c)
+ */
+extern bool fire_bolt(s32b typ, s32b dir, s32b dam, s32b max_range = -1);
+
+/** @fn fire_beam(s32b typ, s32b dir, s32b dam, s32b max_range = -1)
+ * @brief Generate a beam spell of type "typ" aimed in direction "dir"
+ * for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a beam spell
+ * Pass through monsters, as a "beam"
+ * Affect monsters (not grids or objects)
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * @note (see file spells2.c)
+ */
+extern bool fire_beam(s32b typ, s32b dir, s32b dam, s32b max_range = -1);
+
+/** @fn fire_druid_ball(s32b typ, s32b dir, s32b dam, s32b rad, s32b max_range = -1)
+ * @brief Generate a druid ball spell of type "typ" with radius "rad" aimed in
+ * direction "dir" for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param rad Number \n rad is 0 for a beam/bolt and 1-16 for a ball.
+ * @brief Radius
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a druidistic ball spell
+ * Stop if we hit a monster, act as a "ball"
+ * Allow "target" mode to pass over monsters
+ * Affect grids, objects, and monsters
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * The spells follows a mana path
+ * WARNING: This routine has been deprecated.
+ * @note (see file spells2.c)
+ */
+extern bool fire_druid_ball(s32b typ, s32b dir, s32b dam, s32b rad, s32b max_range = -1);
+
+/** @fn fire_druid_bolt(s32b typ, s32b dir, s32b dam, s32b max_range = -1)
+ * @brief Generate a druid bolt spell of type "typ" aimed in direction "dir"
+ * for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a druidistic bolt spell
+ * Stop if we hit a monster, as a "bolt"
+ * Affect monsters (not grids or objects)
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * The spells follows a mana path
+ * WARNING: This routine has been deprecated.
+ * @note (see file spells2.c)
+ */
+extern bool fire_druid_bolt(s32b typ, s32b dir, s32b dam, s32b max_range = -1);
+
+/** @fn fire_druid_beam(s32b typ, s32b dir, s32b dam, s32b max_range = -1)
+ * @brief Generate a druid beam spell of type "typ" aimed in direction "dir"
+ * for "dam" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a druidistic beam spell
+ * Pass through monsters, as a "beam"
+ * Affect monsters (not grids or objects)
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * The spells follows a mana path
+ * WARNING: This routine has been deprecated.
+ * @note (see file spells2.c)
+ */
+extern bool fire_druid_beam(s32b typ, s32b dir, s32b dam, s32b max_range = -1);
+
+/** @fn fire_bolt_or_beam(s32b prob, s32b typ, s32b dir, s32b dam, s32b max_range = -1)
+ * @brief Generate a bolt spell of type "typ" aimed in direction "dir"
+ * for "dam" damage with "prob" percent chance of a beam.
+ * @param prob Number \n prob is the percentage chance the spell will be a
+ * beam instead of a bolt.
+ * @brief Beam probability percentage
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Cast a bolt spell, or rarely, a beam spell
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * @note (see file spells2.c)
+ */
+extern bool fire_bolt_or_beam(s32b prob, s32b typ, s32b dir, s32b dam, s32b max_range = -1);
+
+/** @fn alchemy(void)
+ * @brief Turns an object into gold, gain some of its value in a shop
+ * @return Boolean \n TRUE if object turns to gold, otherwise FALSE.
+ * @note
+ * The player selects an object (and quantity if it applies) from the
+ * inventory or the floor and attempts to turn it into gold. If the
+ * price of the item is < 0 then the player gains nothing (fool's gold),
+ * otherwise the player gets a third of the price in gold. Artifacts are
+ * not affected.
+ * @note (see file spells2.c)
+ */
+extern bool alchemy(void);
+
+/** @fn alter_reality(void)
+ * @brief The player leaves the level immediately.
+ * @return void
+ * @note (see file spells2.c)
+ */
+extern void alter_reality(void);
+
+/** @fn swap_position(s32b lty, s32b ltx)
+ * @brief Swap the position of the player with whatever is in grid "lty,ltx".
+ * @param lty Number \n Y-coordinate of target location.
+ * @brief Y-coordinate
+ * @param ltx Number \n X-coordinate of target location.
+ * @brief X-coordinate
+ * @return void
+ * @note
+ * Player moves to target location. If there is a monster at the target
+ * location, it is moved to the player location. This is not allowed if
+ * the space-time continuum can not be disrupted.
+ * @note (see file spells2.c)
+ */
+extern void swap_position(s32b lty, s32b ltx);
+
+/** @fn teleport_swap(s32b dir)
+ * @brief Player swaps places with target in direction "dir".
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @return void
+ * @note
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, the target is the grid adjacent to the player in direction
+ * "dir".
+ * The target must be a monster. It will not work if the space-time continuum
+ * can not be disrupted or if the monster resists teleportation.
+ * @note (see file spells2.c)
+ */
+extern void teleport_swap(s32b dir);
+
+/** @fn project_meteor(s32b radius, s32b typ, s32b dam, u32b flg)
+ * @brief Generate from "radius" to ("radius" x2) ball spells with properties
+ * "flg" of type "typ" for "dam" damage.
+ * @param radius Number \n rad is the minimum number of balls created.
+ * rad + randint("rad") balls are created.
+ * @brief Balls
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param flg Number \n flg is the projection effect (PROJECT field).
+ * @brief Properties flag
+ * @return void
+ * @note
+ * Apply a "project()" a la meteor shower
+ * Each ball has a radius of 2 grids. Each target grid is within 5 grids of
+ * the player.
+ * @note (see file spells2.c)
+ */
+extern void project_meteor(s32b radius, s32b typ, s32b dam, u32b flg);
+
+/** @fn passwall(s32b dir, bool safe)
+ * @brief Move the player through walls in direction "dir", to a "safe"
+ * location.
+ * @param dir Number \n dir must be a value from 0 to 9. It can not be 5.
+ * @brief Direction
+ * @param safe Boolean \n TRUE if location must be a safe one, otherwise FALSE.
+ * @brief Safe location?
+ * @return Boolean \n TRUE if move was successful, otherwise FALSE.
+ * @note
+ * Send the player shooting through walls in the given direction until
+ * they reach a non-wall space, or a monster, or a permanent wall.
+ * If the player ends up in a wall, they take 10d8 damage and the wall is
+ * replaced by a floor.
+ * This does not work in the wilderness, on quest levels, or if teleport is
+ * not allowed. Stopping on monsters or inside vaults is not allowed.
+ * @note (see file spells2.c)
+ */
+extern bool passwall(s32b dir, bool safe);
+
+/** @fn project_through(s32b typ, s32b dir, s32b dam, s32b flg, s32b max_range)
+ * @brief Generate a bolt/beam with properties "flg" in direction "dir" for
+ * "dam" points of "typ" damage.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dir Number \n dir must be a value from 0 to 9.
+ * @brief Direction
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @param flg Number \n flg is the projection effect (PROJECT field).
+ * @brief Properties flag
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Hack -- apply a "projection()" in a direction (or at the target)
+ * If direction is 5 and a target has been selected, then the target is used.
+ * Otherwise, a target is calculated based on a distance of 999 grids away
+ * from the player in direction "dir".
+ * @note (see file spells2.c)
+ */
+extern bool project_hook@project_through(s32b typ, s32b dir, s32b dam, s32b flg, s32b max_range);
+
+/** @fn reset_recall(bool no_trepas_max_depth)
+ * @brief Ask the user to set a recall level in a dungeon, possibly no
+ * deeper than maximum dungeon depth.
+ * @param no_trepas_max_depth Boolean \n TRUE if user can select maximum
+ * dungeon depth, FALSE if user can select up to player's maximum depth
+ * in the dungeon so far.
+ * @brief Allow maximum dungeon depth?
+ * @return Boolean \n TRUE of recall level was reset, otherwise FALSE.
+ * @note
+ * Ask the user for a dungeon and appropriate level within the dungeon.
+ * The user can not specify a dungeon the player has not gone to yet.
+ * If the depth is <1, reset fails. If depth is 99 or 100, the level is set
+ * to 98.
+ * @note (see file spells2.c)
+ */
+extern bool reset_recall(bool no_trepas_max_depth);
+
+/** @fn get_aim_dir(s32b *dp=0)
+ * @brief Get an aiming direction from the user and store it in "dp".
+ * @param *dp Number
+ * @brief Direction
+ * @return Boolean \n TRUE if a valid direction was returned, otherwise FALSE.
+ * @return *dp Number \n Aiming direction.
+ * @note
+ * Get an "aiming direction" from the user.
+ * The "dir" is loaded with 1,2,3,4,6,7,8,9 for "actual direction", and
+ * "0" for "current target", and "-1" for "entry aborted".
+ * Note that "Force Target", if set, will pre-empt user interaction,
+ * if there is a usable target already set.
+ * Note that confusion over-rides any (explicit?) user choice.
+ * @note (see file xtra2.c)
+ */
+extern bool get_aim_dir(s32b *dp=0);
+
+/** @fn get_rep_dir(s32b *dp=0)
+ * @brief Get a movement direction from the user and store it in "dp".
+ * @param *dp Number
+ * @brief Direction
+ * @return Boolean \n TRUE if a valid direction was returned, otherwise FALSE.
+ * @return *dp Number \n Movement direction.
+ * @note
+ * Request a "movement" direction (1,2,3,4,6,7,8,9) from the user,
+ * and place it into "command_dir", unless we already have one.
+ * This function should be used for all "repeatable" commands, such as
+ * run, walk, open, close, bash, disarm, spike, tunnel, etc, as well
+ * as all commands which must reference a grid adjacent to the player,
+ * and which may not reference the grid under the player.  Note that,
+ * for example, it is no longer possible to "disarm" or "open" chests
+ * in the same grid as the player.
+ * Direction "5" is illegal and will (cleanly) abort the command.
+ * This function tracks and uses the "global direction", and uses
+ * that as the "desired direction", to which "confusion" is applied.
+ * @note (see file xtra2.c)
+ */
+extern bool get_rep_dir(s32b *dp=0);
+
+/** @fn project_los(s32b typ, s32b dam);
+ * @brief Generate a bolt/beam for "dam" points of "typ" damage to all
+ * viewable monsters in line of sight.
+ * @param typ Number \n typ is the type of damage (damage type field).
+ * @brief Type
+ * @param dam Number \n dam is the number of hit points of damage.
+ * @brief Damage
+ * @return Boolean \n TRUE if player notices, otherwise FALSE.
+ * @note
+ * Apply a "project()" directly to all viewable monsters
+ * Note that affected monsters are NOT auto-tracked by this usage.
+ * @note (see file spells2.c)
+ */
+extern bool project_hack @ project_los(s32b typ, s32b dam);
+
+/** @fn map_area(s32b cy, s32b cx, s32b radius)
+ * @brief Map current area.
+ * @return void
+ * @note
+ * Hack -- map the current panel (plus some) ala "magic mapping"
+ * Up to 10 grids above and below, and up to 20 grids either side of the
+ * panel are mapped.
+ * @note (see file cave.c)
+ */
+extern void map_area(s32b cy, s32b cx, s32b radius);
+
+/** @fn lite_level(bool mark)
+ * @brief Lite level.
+ * @return void
+ * @note
+ * Lite all grids on level, optional mapping (marking) them, but
+ * not memorizing objects.
+ * @note (see file cave.c)
+ */
+void lite_level(bool mark);
+
+/** @fn wiz_lite(bool mark)
+ * @brief Lite level using "clairvoyance".
+ * @return void
+ * @note
+ * This function "illuminates" every grid in the dungeon, memorizes all
+ * "objects", memorizes all grids as with magic mapping, and, under the
+ * standard option settings (view_perma_grids but not view_torch_grids)
+ * memorizes all floor grids too.
+ * Note that if "view_perma_grids" is not set, we do not memorize floor
+ * grids, since this would defeat the purpose of "view_perma_grids", not
+ * that anyone seems to play without this option.
+ * Note that if "view_torch_grids" is set, we do not memorize floor grids,
+ * since this would prevent the use of "view_torch_grids" as a method to
+ * keep track of what grids have been observed directly.
+ * @note (see file cave.c)
+ */
+extern void wiz_lite(bool mark);
+
+/** @fn wiz_lite_extra(void)
+ * @brief Lite and memorize level.
+ * @return void
+ * @note (see file cave.c)
+ */
+extern void wiz_lite_extra(void);
+
+/** @fn forget_level(void)
+ * @brief Forget map and objects, but don't darken level.
+ * @return brief
+ */
+void forget_level(void);
+
+/** @fn darken_level(bool all)
+ * @brief Darkens level without unmapping it or forgetting objects.
+ * @param all Boolean \n Darken all squares, not just boring ones.
+ * @brief all
+ * @return void
+ */
+void darken_level(bool all);
+
+/** @fn wiz_dark(void)
+ * @brief Forget and darken all grids and objects.
+ * @return void
+ * @note
+ * Forget the dungeon map (ala "Thinking of Maud...").
+ * @note (see file cave.c)
+ */
+extern void wiz_dark(void);
+
+/** @fn create_between_gate(s32b dist, s32b y, s32b x)
+ * @brief Create a between gate at grid "y,x" or at a target grid within
+ * distance "dist" of the player.
+ * @param dist Number \n dist is the maximum distance from the player of the
+ * between gate.
+ * @brief Distance
+ * @param y Number \n Y-coordinate of dungeon grid.
+ * @brief Y-coordinate
+ * @param x Number \n X-coordinate of dungeon grid.
+ * @brief X-coordinate
+ * @return void
+ * @note
+ * Creates a between gate
+ * This will fail if teleporting is not allowed on the level.
+ * If the coordinates are given, a between gate is created under the player
+ * and at the given coordinate.
+ * If there are no coordinates, a target is selected. The gate will not be
+ * created if the grid is not empty, or the grid is in a vault, or the grid
+ * is too far away. There is always a chance (1 in (Conveyance Skill *
+ * Conveyance Skill / 2)) the gate will not be created.
+ * @note (see file spells2.c)
+ */
+extern void create_between_gate(s32b dist, s32b y, s32b x);
+
+/** @struct magic_power
+ * @brief Innate powers
+ * @{ */
+struct magic_power
+{
+	/** @var min_lev
+	 * @brief Number
+	 */
+	s32b     min_lev;
+
+	/** @var mana_cost
+	 * @brief Number
+	 */
+	s32b     mana_cost;
+
+	/** @var fail
+	 * @brief Number
+	 */
+	s32b     fail;
+
+	/** @var name
+	 * @brief String
+	 */
+	cptr    name;
+
+	/** @var desc
+	 * @brief String
+	 */
+	cptr    desc;
+};
+/** @} */
+
+/** @fn *new_magic_power(s32b num)
+ * @dgonly
+ * @brief Create a wiped array of "num" magic powers.
+ * @param num Number \n num is the number of magic powers.
+ * @brief Number
+ * @return magic_power \n Array of magic powers.
+ * @note
+ * Get a new magic type
+ * Note: do not call this function directly.
+ * Please use add_magic() in powers.lua instead.
+ * By order of DG.
+ * @note (see file lua_bind.c)
+ */
+extern magic_power *new_magic_power(s32b num);
+
+/** @fn get_magic_power(magic_power *m_ptr, s32b num);
+ * @dgonly
+ * @brief Get magic power number "num" from array "m_ptr" of magic powers.
+ * @param *m_ptr magic_power \n m_ptr is the array of magic powers.
+ * @brief Powers
+ * @param num Number \n num is the index to the array.
+ * @brief Index
+ * @return magic_power \n A magic power.
+ * @note
+ * Note: do not call this function.
+ * By order of DG.
+ * @note (see file lua_bind.c)
+ */
+extern magic_power *grab_magic_power @ get_magic_power(magic_power *m_ptr, s32b num);
+
+/** @fn  select_magic_power(s32b *sn, magic_power *powers, s32b max_powers, char *info_fct, s32b plev, s32b cast_stat);
+ * @dgonly
+ * @brief Select a magic power from array of powers.
+ * @param *sn Number
+ * @brief Power (spell) number
+ * @param *powers magic_power \n powers is the array of magic powers.
+ * @brief Powers
+ * @param max_powers Number \n max_powers is the maximum number of magic
+ * powers.
+ * @brief Maximum powers
+ * @param *info_fct String \n info_fct is the name of a function which will
+ * return power info.
+ * @brief Name of power info function
+ * @param plev Number \n plev is the player's level of magic skill.
+ * @brief Player magic level
+ * @param cast_stat Number \n cast_stat is the required casting statistic
+ * (INT or WIS).
+ * @brief Casting statistic
+ * @return Boolean \n TRUE if power was selected, otherwise FALSE.
+ * @return *sn Number \n sn is the index of the power in the array of magic
+ * powers.
+ * @note
+ * Allow user to choose a magic power.
+ * If a valid spell is chosen, saves it in '*sn' and returns TRUE
+ * If the user hits escape, returns FALSE, and set '*sn' to -1
+ * If there are no legal choices, returns FALSE, and sets '*sn' to -2
+ * The "prompt" should be "cast", "recite", or "study".
+ * The "known" should be TRUE for cast/pray, FALSE for study
+ * Note: do not call this function directly.
+ * Please use execute_magic() in powers.lua instead.
+ * By order of DG.
+ * @note (see files lua_bind.c, cmd7.c)
+ */
+extern bool get_magic_power_lua @ select_magic_power(s32b *sn, magic_power *powers, s32b max_powers, char *info_fct, s32b plev, s32b cast_stat);
+
+/** @fn add_new_power(cptr name, cptr desc, cptr gain, cptr lose, byte level, byte cost, byte stat, byte diff)
+ * @dgonly
+ * @brief Add a new power to the array of magic powers.
+ * @param name String \n name is the name of the power.
+ * @brief Name
+ * @param desc String \n desc is the description of the power.
+ * @brief Description
+ * @param gain String \n gain describes the effect when the power starts
+ * working.
+ * @brief Gain message
+ * @param lose String \n loss describes the effect when the power stops
+ * working.
+ * @brief Lose message
+ * @param level Number \n level is the magic skill level a player needs to
+ * use the power.
+ * @brief Level
+ * @param cost Number \n cost is the number of mana points required to use the
+ * power.
+ * @brief Mana cost
+ * @param stat Number \n stat is the required casting statistic (INT or WIS).
+ * @brief Casting statistic
+ * @param diff Number \n diff is the difficulty.
+ * @brief Difficulty
+ * @return Number \n The index of the new power in the magic power array.
+ * @note
+ * Note: do not call this function.
+ * By order of DG.
+ * @note (see file lua_bind.c)
+ */
+s16b add_new_power(cptr name, cptr desc, cptr gain, cptr lose, byte level, byte cost, byte stat, byte diff);
+
+/** @var power_max
+ * @brief Number
+ * @note Maximum number of innate powers.
+ */
+extern s16b power_max;
+
+/** @fn lua_spell_chance(s32b chance, s32b level, s32b skill_level, s32b mana, s32b cur_mana, s32b stat)
+ * @dgonly
+ * @brief Get the chance a spell will fail.
+ * @param chance Number \n chance is the inital chance a spell will work.
+ * @brief Initial chance
+ * @param level Number \n level represents the level of player skill.
+ * @brief Player skill level
+ * @param skill_level Number \n *unused*.
+ * @brief *Unused*
+ * @param mana Number \n mana is the mana required by the spell.
+ * @brief Spell mana
+ * @param cur_mana Number \n cur_mana is the player's current mana.
+ * @brief Player mana
+ * @param stat Number \n stat is the required casting statistic (INT or WIS).
+ * @brief Casting statistic
+ * @return Number \n Chance of failure.
+ * @note
+ * Note: do not call this function directly.
+ * By order of DG.
+ * @note (see file lua_bind.c)
+ */
+extern s32b lua_spell_chance(s32b chance, s32b level, s32b skill_level, s32b mana, s32b cur_mana, s32b fail_adj, s32b fail_min);
+
+/** @fn lua_spell_device_chance(s32b skill, s32b chance, s32b level, s32b base_level)
+ * @dgonly
+ * @brief Get the chance a device will fail.
+ * @param chance Number \n chance is the inital chance a spell will work.
+ * @brief Initial chance
+ * @param level Number \n level represents the level of player skill.
+ * @brief Player skill level
+ * @param base_level Number \n *unused*
+ * @brief *Unused*
+ * @return Number \n Chance of failure.
+ * @note
+ * Note: do not call this function directly.
+ * By order of DG.
+ * @note (see file lua_bind.c)
+ */
+extern s32b lua_spell_device_chance(s32b skill, s32b chance, s32b level, s32b base_level);
+
+/** @fn get_school_spell(cptr do_what, cptr check_fct, object_type *force_book=0, bool browse=FALSE)
+ * @brief Get a spell from a book.
+ * @param do_what String \n what the player wants to do with the spell,
+ * for example "cast" or "copy".
+ * @brief Action
+ * @param check_fct String \n check_fct is the name of a function which checks
+ * if the player has access to the spell.
+ * @brief Check function
+ * @param force_book Object \n If it is a valid object it forces the use of
+ * it as a spellbook, bypassing spellbook selection
+ * @param force_book Boolean \n If true it will only display the browse interface and never return a spell
+ * @brief Bypass book selection
+ * @return Number \n Spell number.
+ * @note
+ * Get a spell from a book
+ * The player must have a book to select a spell. When a book is chosen, the
+ * player is given a choice of spells to select. The player must be able to
+ * access the spell.
+ * If no spell is chosen, -1 is returned.
+ * @note (see file cmd5.c)
+ */
+extern s32b get_school_spell(cptr do_what, cptr check_fct, object_type *force_book=0, bool browse=FALSE);
+
+/** @name Last Teleportation
+ * @brief Coordinates of last successful teleportation
+ * @{ */
+
+/** @var last_teleportation_y
+ * @brief Number
+ * @note y-coordinate of last successful teleportation
+ */
+extern s16b last_teleportation_y;
+
+/** @var last_teleportation_x
+ * @brief Number
+ * @note x-coordinate of last successful teleportation
+ */
+extern s16b last_teleportation_x;
+/** @} */
+
+/** @fn get_pos_player(s32b dis, s32b *ny=0, s32b *nx=0)
+ * @brief Get a grid near the player.
+ * @param dis Number \n is the maximum distance away from the player.
+ * This is limited to 200.
+ * @brief Distance from player
+ * @return void
+ * @return ny Number \n Y-coordinate of grid.
+ * @return nx Number \n X-coordinate of grid.
+ * @note
+ * This function is slightly obsessive about correctness.
+ * Minimum distance is half the maximum distance. The function attempts to
+ * find a valid grid up to 500 times. If no valid grid is found, the maximum
+ * distance is doubled (though no more than 200) and the minimum distance is
+ * halved. The function does this 100 times.
+ * @note (see file spells1.c)
+ */
+extern void get_pos_player(s32b dis, s32b *ny=0, s32b *nx=0);
+
+/** @name Current spell caster
+ * @brief Number
+ * @note 0 is the player, < 0 are special stuff, > 0 are monsters(m_idx)
+ * @{ */
+extern s32b spell_caster;
+/** @} */
+
+/** @fn do_probe(s32b m_idx)
+ * @brief Displays lots of info about a monster
+ * @param m_idx Number \n Monster index to analyze.
+ * @return void
+ * @note
+ */
+extern void do_probe(s32b m_idx);
+
+/** @fn project_m(s32b who, s32b r, s32b y, s32b x, s32b dam, s32b typ, s32b flg,
+				s32b  dir)
+ * @dgonly
+ * @return Boolean
+ * @note
+ */
+extern bool project_m(s32b who, s32b r, s32b y, s32b x, s32b dam, s32b typ, s32b flg,
+					s32b dir);
+
+/** @fn project_o(s32b who, s32b r, s32b y, s32b x, s32b dam, s32b typ, s32b flg
+				s32b dir)
+ * @dgonly
+ * @return Boolean
+ * @note
+ */
+extern bool project_o(s32b who, s32b r, s32b y, s32b x, s32b dam, s32b typ, s32b flg,
+					s32b dir);
+
+/** @fn project_f(s32b who, s32b r, s32b y, s32b x, s32b dam, s32b typ, s32b flg,
+				s32b dir)
+ * @dgonly
+ * @return Boolean
+ * @note
+ */
+extern bool project_f(s32b who, s32b r, s32b y, s32b x, s32b dam, s32b typ, s32b flg,
+					s32b dir);
+
+/** @fn project_p(s32b who, s32b r, s32b y, s32b x, s32b dam, s32b typ, s32b a_rad,
+				s32b flg, s32b dir)
+ * @dgonly
+ * @return Boolean
+ * @note
+ */
+extern bool project_p(s32b who, s32b r, s32b y, s32b x, s32b dam, s32b typ,
+					 s32b a_rad, s32b flg, s32b dir);
+
+extern bool projectable(s32b y1, s32b x1, s32b y2, s32b x2);
+
+struct effect_type
+{
+	s16b    who;           	/* Who did it */
+	s16b    time;           /* For how long */
+	s16b    dam;            /* How much damage */
+	s16b    type;           /* Of which type */
+	s16b    cy;             /* Center of the cast*/
+	s16b    cx;             /* Center of the cast*/
+	s16b    rad;            /* Radius -- if needed */
+	s16b    speed;          /* Speed */
+	u32b    flags;          /* Flags */
+
+	s32b    energy;         /* Current energy(for speed) */
+};
+
+#define MAX_EFFECTS		128
+
+extern effect_type effects[MAX_EFFECTS] @lasting_effects;
+

@@ -1,0 +1,31 @@
+-- Wilderness tiles definitions features definitions
+new_wilderness_terrain
+{
+	char = 'X'
+	name = "The world's edge"
+	long_name = "The world's edge"
+	feat = FEAT_PERM_SOLID
+	level = 98
+	generator = {
+		FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID,
+		FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID,
+		FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID,
+		FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID,
+	}
+}
+new_wilderness_terrain
+{
+	char = '1'
+	name = "The Dungeon of Doom"
+	long_name = "You will perish here"
+	feat = FEAT_PERM_SOLID
+	type = TERRAIN_TOWN
+	level = 1
+	entrance = 1
+	generator = {
+		FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID,
+		FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID,
+		FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID,
+		FEAT_PERM_SOLID, FEAT_PERM_SOLID, FEAT_PERM_SOLID,
+	}
+}

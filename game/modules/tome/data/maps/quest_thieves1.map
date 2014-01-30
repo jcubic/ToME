@@ -1,0 +1,34 @@
+map.define("quest_thieves1.map")
+
+-- This level grids only contain one object
+map.set_default_symbol_attributes{ inventory_size=2 }
+
+-- Floor
+map.symbol{ symbol='.' feat=FEAT_FLOOR info=CAVE_GLOW }
+
+-- Lit permanent wall
+map.symbol{ symbol='X' feat=FEAT_PERM_INNER info=CAVE_GLOW }
+
+-- Looked door
+map.symbol{ symbol='D' feat=FEAT_DOOR_LOCKED_HEAD+6 info=CAVE_GLOW inventory_size=0  }
+
+-- uptaircase(floor for now, the quest completion changes this)
+map.symbol{ symbol='<' feat=FEAT_FLOOR info=CAVE_GLOW inventory_size=0 }
+
+-- down staircase
+map.symbol{ symbol='>' feat=FEAT_MORE info=CAVE_GLOW inventory_size=0 }
+
+
+-- Dungeon layout
+map.map
+{
+[[XXXXXXXXXXX]],
+[[X.......X>X]],
+[[X.......XDX]],
+[[XDX.......X]],
+[[X<X.......X]],
+[[XXXXXXXXXXX]],
+}
+
+-- Starting position
+map.set_player(4, 1)

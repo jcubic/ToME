@@ -1,0 +1,109 @@
+-- PernAngband wilderness definition file by DarkGod (darkgod@pernangband.org).
+-- with the help form Gwidon S. Naskrent (naskrent@artemida.amu.edu.pl).
+-- Designed to "look like" Middle-earth map.
+-- Updated to include a more accurate location of Angband and many new features by furiosity for Theme.
+-- Adopted for T3, with some alteration.
+
+-- BucketMan:
+-- The world map should probably be rebuilt from scratch:
+-- * Zoom in, make it bigger to give us more room
+-- * Fix proportions.
+-- * Connect the Misty and White mountains, and put Rohan in the middle
+-- * Make Mordor less blocky
+-- * Mirkwood and Lethe issues: waiting on new overland map system
+-- * Consolidate TERRAIN's. There seem to be several duplicates.
+-- * It would be nice if we could justify a way of genuinely
+--   blocking off Mordor so that Cirith Ungol is meaningful.
+-- * From looking at a Middle Earth map, there seems to be some
+--   disagreement about what's a river and what's a road
+
+map.define("Wilderness")
+
+map.wild.map
+{
+[[XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX]],
+[[X========q=qqqqqqqqqggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggX]],
+[[X=========q=qq=qqqqgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggX]],
+[[X==========qq=q=qqqqggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggX]],
+[[X==============qqq=qqgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggX]],
+[[X===============q=q=q=gwwwwgggwwwwwgggggggggwwwwwwwwwwggggwwwwwwwwwwwwwggggwwwwwwwwggggwwwwwwwwwggggX]],
+[[X====================qwwwwwwwwwwwwwwwwggggggggwwwwwwwwwwwwwwwwwwwwwwwwwwggwwwwwwwwwwwwwwwwwwwwwwEEEEX]],
+[[X======================wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww.EEEEEEEEX]],
+[[X========================wwwwwwww...wwwwwwwwww..........wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww.EEEEEEEEEEEX]],
+[[X========================..www....wwwwwwww................wwwwGGGGwwwwwwww......wwwww.EEEEEEEEEEEEEEX]],
+[[X==========.......======.........hhhh..................GGGGGGGwwwDwwww.........wwww.EjEEEEjEEEEEEjEEX]],
+[[X========......BB..===.........hhhhhhhh..&&&&&...&..GGGGGGGGGGGGG.................jEEEjEjEEjEjjEEEEjX]],
+[[X=======......BB..===............hhhh.......&&&&&&GG.._._...........................jjjjjjjjjjjjjjjjX]],
+[[X======...._.BB._..._............................M....._._TTT................II........jjjjjjjjjjjjjX]],
+[[X=======.._..BB.._.._..hhhh................&....&MM~~~~.TT_TTTT..........I.....III........jjjjjj^^^^X]],
+[[X======.._...BB..._._..hhh.......hhhhhh.....&&&&._MM..~.TTT_T_TT..^l......IIIIII..............jjj^^^X]],
+[[X=====.._..TBBB...._._..h.=....hhh|hh..........__.MM__~.TTTT_h_TT.l8........_.....................^^X]],
+[[X===...._....BB....._..hh.=_....h.|..........__...MM..~.TTTTTT_TT.=........_........................X]],
+[[X====.._...BBBB...._....hhhh__....|........._.....MM..~.TTTTTT____a........_........................X]],
+[[X=====.._..TTBB..._........._.....|h......._.ff...MM..~6TTTTT&&&T._........._.......................X]],
+[[X====...__..TBBB._......hh.._.....|.hh...._.f^^^._MM..~..TTT&G&&&T._........._......................X]],
+[[X=====..._.....__......hho+-_.2---x1hh-------_L...MM---------------_........_.......................X]],
+[[X======..==..=__....h....h|.._.hh.|ih....._..^^^._M...~..TTTTTTTTTT._........_......................X]],
+[[X=============.....hhh....|.._.OOO|h......_.._.._MMM...~..TTTTTTTTT.._........_....................jX]],
+[[X======........BB...h.....|..._OOO|hh...._.._...MM.....~..TTTTTTTT...._......_....................jjX]],
+[[X=====.........BB.........[---_.O.|.h...._._..MMMMM.s._~..TTTTTTTT....._......_..................jjjX]],
+[[X=====.........BB............._[--|....._.._..MMMM___s.~~.TTTTTTTT......_.._._..................jjjjX]],
+[[X======........BB....B......._....|....._._...MMMM.....~~.TTTTT.T........._.._.................jfjjjX]],
+[[X=======.....TBBB..BBBB....._.....|....._....MMMMM....~~...TTTT.............._...............jffjjjjX]],
+[[X==========..TBBBT........._......|...._.....MMMM.....~~...TTTT..............._...._.......fjfjjfjjjX]],
+[[X==========..TTTBBTBB....._.......|ss__.....hMMMM....~~....TTTTTTT............._.__._ ...ffffffjjjjjX]],
+[[X==========...TTBTT......_........___ss_....MMMMM....~~..TTTTTTTTTT............._....  ...f  fffjjjjX]],
+[[X==========.....T.T....._........_.....______MM___...~~.TTTTTTTTTT...................        ffjjjjjX]],
+[[X===========.=........._........_...........MMMM_!.!~~..TT&TTTTTTT..................         fjfjjjjX]],
+[[X================....__........_..jjj......MMMM._!4!~~..TTTTTTTTT...................         ...jjjjX]],
+[[X=================.==E........_....jj.....ffMMM..!!!~.....TTTTT..................^^.        ......jjX]],
+[[X===================EE........._.........ffMMM.......~~.........................^^^^.       .......jX]],
+[[X===================E==......._..........ffMMMttttt._..~~~~;;....................^^^.  ...  .......jX]],
+[[X===================E==......_...........f&MMMMtttt_s_.....~;;..................^^^^^. ... ........jX]],
+[[X=====================......_.jjj........f&MMMtttttt..__s~~;;...................^^^^^^.............jX]],
+[[X=====================.....=_.jj.........&&MMMttttt.....~...........................^^.............jX]],
+[[X======================...==..jjj........&&_&&&.._.......~~........................................jX]],
+[[X=======================.===..............^_^....._........~.......................................jX]],
+[[X===========================..............._........_.....~........................................jX]],
+[[X==========================.jj......._._.._........_....h=hh...SSS.................................jX]],
+[[X==========================.jj._.._j_...__.........._..h===h.SSSS.................................jjX]],
+[[X==========================..__.__._._._..&&&b....._....h=hh..SS.A.A.............................jjjX]],
+[[X============================....._..._.__.&&&......_....~~.....AAkAAA..A..AA..A..A..AA...A.....jjjjX]],
+[[X===========================.............._&&&^^....._....~~s...DDvvAAAAAAAAAAAAAAAAAAAAAAAAAAAAJjjjX]],
+[[X===========================.......^.&.^^&&&&&&&......__.~~sss...DDVVVVVVVAVVVAVAA_"""_""""""..AAAjjX]],
+[[X===========================.....^^.&.&_&^&.&^&_&&&9...._..~~ss..DDVVUVVVVVVVVVVA_"""""_""""""...AAjX]],
+[[X===========================....^....__^^...^^^._^&&........~~.c.DDVVUUVVVVVVVAA_"""""""_"""".....AAX]],
+[[X===========================..^^^_.._.......^^._.^^&&&........~~.DDVVVVVVVVVVAA""_""""""_"""""""....X]],
+[[X============================.^f_.__._........_&^^^.&&&&&......e.DDVAAVAAAVVV"""""_""""_""""""".....X]],
+[[X============================.f^_..._....hh.._&&&^^.._&&&&.&...~.DDD""A"A""""""""=="""_""""""""""...X]],
+[[X============================.f^._.hhhhhhhh...__...._^&^&&&&&.~..DD""""""""""""======_"""""""""""AAAX]],
+[[X===========================.^^._...h.h........._.._.^&^^._^3.~..DD"""_"_"""""=====""""""""""""AAAddX]],
+[[X==========================..^^.._.....===.=====_._&^...._...^.~.DD"__"_"__======"""""AA""""AAAAddddX]],
+[[X==========================.h...._...===========_&&^...._._...~~.DD_""""""""""""_""A"AAAAAAAAdddddddX]],
+[[X========================.hhh=...=_.==========&^^^^.._._..._.~~..DDD""DDD""D"""DD_DDAAddddddddddddddX]],
+[[X======================....=====.==============^.^._=._.....~~...DDDDDDDDDDDDDDDDDDDddddddddddddddddX]],
+[[X==============================================.^^^==....~~~~....................dddddddddddddddddddX]],
+[[X===============================================..====~~~p................ddddddddddddddddddddddddddX]],
+[[X===============================================.==^==_............dddddddddddddddddddddddddddddddddX]],
+[[X=================================================^^===........dddddddddddddddddddddddddddddddddddddX]],
+[[XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX]],
+}
+
+-- Starting position
+map.wild.start(21, 35)
+
+map.wild.entrance{ dungeon=DUNGEON_KZD_WEST y=32 x=44 }
+map.wild.entrance{ dungeon=DUNGEON_KZD_EAST y=32 x=47 }
+
+
+
+-- A number of the dungeons are to be relocated as sideshoots etc.
+-- Also need to replace double entrances.
+
+------ Base dungeons
+---- These will presumably be replaced with towns
+---- whose maps will contain the dungeons.
+--map.wild.entrance{ dungeon=DUNGEON_ORC_MINES y=14 x=78 }
+--map.wild.entrance{ dungeon=DUNGEON_FANGORN y=40 x=48 }
+--map.wild.entrance{ dungeon=DUNGEON_LAND_OF_RHUN y=37 x=77 }
+--map.wild.entrance{ dungeon=DUNGEON_CATACOMBS y=11 x=50 }

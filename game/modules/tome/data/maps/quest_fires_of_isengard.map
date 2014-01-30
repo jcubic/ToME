@@ -1,0 +1,41 @@
+map.define("quest_fires_of_isengard.map")
+
+-- Dark floor
+map.symbol{ symbol='.' feat=FEAT_GRASS info=CAVE_GLOW }
+
+map.symbol{ symbol='x' feat=FEAT_TREE_STUMP info=CAVE_GLOW }
+
+-- Permanent wall
+map.symbol{ symbol='X' feat=FEAT_PERM_INNER mimic=FEAT_TREES info=CAVE_GLOW }
+
+-- Floor with orc
+map.symbol{ symbol='o' feat=FEAT_GRASS info=CAVE_GLOW monster=test_monster_name("orcs of the white hand") faction=FACTION_ISENGARD monster_sleep=FALSE }
+map.symbol{ symbol='O' feat=FEAT_GRASS info=CAVE_GLOW monster=test_monster_name("uruk-hai") faction=FACTION_ISENGARD monster_sleep=FALSE }
+map.symbol{ symbol='C' feat=FEAT_GRASS info=CAVE_GLOW monster=test_monster_name("uruk-hai commander") faction=FACTION_ISENGARD monster_sleep=FALSE }
+
+-- Dungeon layout
+map.map
+{
+[[XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX]],
+[[X.xx....xXx..x.....x..xXx...X.....XX]],
+[[X.X..x.Xx..xx.xXxxXxXXoxX.X.X.X.XX.X]],
+[[X..xx...xXx..x.oXoxxXooXXX.Xo.ooX.XX]],
+[[X....x.....x.x.XooXxoXXoOOOoooX.X..X]],
+[[X...x.X......X...oXCoooXoooooOoo...X]],
+[[X.xx..x.............oooooXoXoo.XXX.X]],
+[[X..x.x.................CooooOoXXx..X]],
+[[X.Xx..xX................ooooooooo..X]],
+[[X...X...................oooooOoXX..X]],
+[[X..Xx.x..................Cooooo....X]],
+[[X..x.X...................ooooo..XX.X]],
+[[X....x....................ooo....X.X]],
+[[X.X.X..X...................oo.X.XX.X]],
+[[X...Xx.x................X...o.X..X.X]],
+[[X.x....x..............XXxx....X....X]],
+[[X.x..x.xxxxX...X..X.XX....X....X..XX]],
+[[X.x.x......X.X..X.X.....X...X...X.XX]],
+[[XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX]],
+}
+
+-- Starting position
+map.set_player(16, 3)

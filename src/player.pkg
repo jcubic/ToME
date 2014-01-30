@@ -1,0 +1,1032 @@
+/* File: player.pkg */
+
+/*
+ * Purpose: Lua interface defitions for the player.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+/** @def SUBRACE_PLACE_AFTER
+ */
+#define SUBRACE_PLACE_AFTER	0
+/** @def SUBRACE_PLACE_BEFORE
+ */
+#define SUBRACE_PLACE_BEFORE	1
+/** @def SUBRACE_PLACE_REPLACE
+ */
+#define SUBRACE_PLACE_REPLACE	2
+
+/** @def PY_MAX_EXP
+ * @note Maximum exp
+ */
+extern s32b PY_MAX_EXP;		/* Maximum exp */
+/** @def PY_MAX_GOLD
+ * @note Maximum gold
+ */
+extern s32b PY_MAX_GOLD;		/* Maximum gold */
+/** @def PY_MAX_LEVEL
+ * @note Maximum level
+ */
+extern s32b PY_MAX_LEVEL;			/* Maximum level */
+
+/** @var player_exp[PY_MAX_LEVEL]
+ * @brief Number
+ * @note Array of experience points per level.
+ */
+extern s32b player_exp[PY_MAX_LEVEL];
+/** @var player_hp[PY_MAX_LEVEL]
+ * @brief Number
+ * @note Array of health points per level.
+ */
+extern s16b player_hp[PY_MAX_LEVEL];
+
+
+/** @name Attributes
+ * @brief Indexes of the various "stats" (hard-coded by savefiles, etc).
+ * @{ */
+module stats {
+extern s16b STATS_MAX @ MAX;
+extern s16b MIN_STAT_VALUE @ MIN_VALUE;
+extern s16b MAX_STAT_VALUE @ MAX_VALUE;
+extern s16b MAX_STAT_NATURAL @ MAX_NATURAL;
+extern s16b modify_stat_value@modify_value(s32b value, s32b amount);
+}
+/** @} */
+
+/*
+ * Skills stuff
+ */
+module skills {
+	extern s32b SKILL_MAX @ MAX_VALUE;
+	extern s32b SKILL_STEP @ STEP_VALUE;
+	extern void dump_skills@dump(PHYSFS_file *fff);
+}
+
+/** @def SUBRACE_SAVE
+ * @note Ugly hack, should be in foo-info, the subrace saved to the savefile
+ */
+#define SUBRACE_SAVE    9
+
+/** @name Sex
+ * @brief Player sex constants (hard-coded by save-files, arrays, etc)
+ * @{ */
+/** @def SEX_FEMALE
+ */
+#define SEX_FEMALE              0
+/** @def SEX_MALE
+ */
+#define SEX_MALE                1
+/** @def SEX_NEUTER
+ */
+#define SEX_NEUTER              2
+/** @} */
+
+
+/** @name Notice flags
+ * @brief Bit flags for the "p_ptr->notice" variable
+ * @{ */
+/** @def PN_COMBINE
+ * @note Combine the pack
+ */
+#define PN_COMBINE      0x00000001L
+/** @def PN_REORDER
+ * @note Reorder the pack
+ */
+#define PN_REORDER      0x00000002L
+/* xxx (many) */
+/** @} */
+
+
+/** @name Update flags
+ * @brief Bit flags for the "p_ptr->update" variable
+ * @{ */
+/** @def PU_BONUS
+ * @note Calculate bonuses
+ */
+#define PU_BONUS        0x00000001L
+/** @def PU_TORCH
+ * @note Calculate torch radius
+ */
+#define PU_TORCH        0x00000002L
+/** @def PU_BODY
+ * @note Calculate body parts
+ */
+#define PU_BODY         0x00000004L
+/** @def PU_SANITY
+ * @note Calculate csan and msan
+ */
+#define PU_SANITY       0x00000008L
+/** @def PU_HP
+ * @note Calculate chp and mhp
+ */
+#define PU_HP           0x00000010L
+/** @def PU_MANA
+ * @note Calculate csp and msp
+ */
+#define PU_MANA         0x00000020L
+/** @def PU_SPELLS
+ * @note Calculate spells
+ */
+#define PU_SPELLS       0x00000040L
+/** @def PU_POWERS
+ * @note Calculate powers
+ */
+#define PU_POWERS       0x00000080L
+/* xxx (many) */
+/** @def PU_UN_VIEW
+ * @note Forget view
+ */
+#define PU_UN_VIEW      0x00010000L
+/* xxx (many) */
+/** @def PU_VIEW
+ * @note Update view
+ */
+#define PU_VIEW         0x00100000L
+/** @def PU_MON_LITE
+ * @note Update monster light
+ */
+#define PU_MON_LITE     0x00200000L
+/* xxx */
+/** @def PU_MONSTERS
+ * @note Update monsters
+ */
+#define PU_MONSTERS     0x01000000L
+/** @def PU_DISTANCE
+ * @note Update distances
+ */
+#define PU_DISTANCE     0x02000000L
+/* xxx */
+/** @def PU_FLOW
+ * @note Update flow
+ */
+#define PU_FLOW         0x10000000L
+/* xxx (many) */
+/** @} */
+
+
+#define CLASS_MANA_PATH_ERASE           0x0001
+#define CLASS_FLOOD_LEVEL               0x0002
+#define CLASS_CANALIZE_MANA_EXTRA       0x0004
+#define CLASS_UNDEAD                    0x0008
+#define CLASS_ANTIMAGIC                 0x0010
+#define CLASS_LEGS                      0x0020
+#define CLASS_ARMS                      0x0040
+#define CLASS_WALL                      0x0080
+
+
+struct tactic_info_type
+{
+	s16b to_hit;
+	s16b to_dam;
+	s16b to_ac;
+	s16b to_stealth;
+	s16b to_disarm;
+	s16b to_saving;
+	cptr name;
+};
+struct move_info_type
+{
+	s16b to_speed;
+	s16b to_search;
+	s16b to_stealth;
+	s16b to_percep;
+	cptr name;
+};
+tactic_info_type tactic_info[9];
+move_info_type move_info[9];
+
+
+/** @struct player_type
+ * @{ */
+struct player_type
+{
+	/** @var lives
+	 * @brief Number
+	 * @note How many times we resurected
+	 */
+	s32b lives;
+
+	/** @var oldpy
+	 * @brief Number
+	 * @note Previous player location -KMW-
+	 */
+	s16b oldpy;
+	/** @var oldpx
+	 * @brief Number
+	 * @note Previous player location -KMW-
+	 */
+	s16b oldpx;
+
+	bool wild_force_side_y_ok;
+	bool wild_force_side_x_ok;
+	s16b wild_force_side_y;
+	s16b wild_force_side_x;
+
+	/** @var py
+	 * @brief Number
+	 * @note Player location
+	 */
+	s16b py;
+	/** @var px
+	 * @brief Number
+	 * @note Player location
+	 */
+	s16b px;
+
+	/** @var descriptor
+	 * @brief player_descriptor
+	 * @note The player descriptor
+	 */
+	player_descriptor descriptor;
+	/** @var descriptors
+	 * @brief flags_type
+	 */
+	flags_type descriptors;
+	/** @var mimic_form
+	 * @brief Number
+	 * @note Actualy transformation
+	 */
+	byte mimic_form;
+	/** @var mimic_level
+	 * @brief Number
+	 * @note Level of the mimic effect
+	 */
+	s16b mimic_level;
+	/** @var oops
+	 * @brief Number
+	 * @note Unused
+	 */
+	byte oops;
+
+	/** @var inventory
+	 * @brief flags_type
+	 */
+	flags_type inventory;
+
+	/** @var hitdie
+	 * @brief Number
+	 * @note Hit dice (sides)
+	 */
+	byte hitdie;
+	/** @var expfact
+	 * @brief Number
+	 * @note Experience factor
+	 */
+	u16b expfact;
+
+	/** @var maximize
+	 * @brief Number
+	 * @note Maximize stats
+	 */
+	bool maximize;
+	/** @var preserve
+	 * @brief Number
+	 * @note Preserve artifacts
+	 */
+	bool preserve;
+	/** @var special
+	 * @brief Number
+	 * @note Special levels
+	 */
+	bool special;
+
+	/** @var allow_one_death
+	 * @brief Number
+	 * @note Blood of life
+	 */
+	byte allow_one_death;
+
+	/** @var age
+	 * @brief Number
+	 * @note Characters age
+	 */
+	s16b age;
+	/** @var ht
+	 * @brief Number
+	 * @note Height
+	 */
+	s16b ht;
+	/** @var wt
+	 * @brief Number
+	 * @note Weight
+	 */
+	s16b wt;
+	/** @var sc
+	 * @brief Number
+	 * @note Social Class
+	 */
+	s16b sc;
+
+	/** @var au
+	 * @brief Number
+	 * @note Current Gold
+	 */
+	s32b au;
+
+	/** @var max_exp
+	 * @brief Number
+	 * @note Max experience
+	 */
+	s32b max_exp;
+	/** @var exp
+	 * @brief Number
+	 * @note Cur experience
+	 */
+	s32b exp;
+	/** @var exp_frac
+	 * @brief Number
+	 * @note Cur exp frac (times 2^16)
+	 */
+	u16b exp_frac;
+
+	/** @var lev
+	 * @brief Number
+	 * @note Level
+	 */
+	s16b lev;
+
+	/** @var town_num
+	 * @brief Number
+	 * @note Current town number
+	 */
+	s16b town_num;
+	/** @var inside_quest
+	 * @brief Number
+	 * @note Inside quest level
+	 */
+	s16b inside_quest;
+	/** @var exit_bldg
+	 * @brief Boolean
+	 * @note Goal obtained in arena? -KMW-
+	 */
+	bool exit_bldg;
+
+	/** @var wilderness_x
+	 * @brief Number
+	 * @note X Coordinates in the wilderness
+	 */
+	s32b wilderness_x;
+	/** @var wilderness_y
+	 * @brief Number
+	 * @note Y Coordinates in the wilderness
+	 */
+	s32b wilderness_y;
+	/** @var wild_mode
+	 * @brief Boolean
+	 * @note TRUE = Small map, FLASE = Big map
+	 */
+	bool wild_mode;
+	/** @var old_wild_mode
+	 * @brief Boolean
+	 * @note TRUE = Small map, FLASE = Big map
+	 */
+	bool old_wild_mode;
+
+	/** @var hp_mod
+	 * @brief Number
+	 * @note A modificator(permanent)
+	 */
+	s16b hp_mod;
+
+	/** @var max_plv
+	 * @brief Number
+	 * @note Max Player Level
+	 */
+	s16b max_plv;
+
+	/** @var luck_cur
+	 * @brief Number
+	 * @note Current "natural" luck value (range -30 <> 30)
+	 */
+	s16b luck_cur;
+	/** @var luck_max
+	 * @brief Number
+	 * @note Current "maximal base" luck value (range -30 <> 30)
+	 */
+	s16b luck_max;
+	/** @var luck_base
+	 * @brief Number
+	 * @note Current "base" luck value (range -30 <> 30)
+	 */
+	s16b luck_base;
+
+	/** @var cur_lite
+	 * @brief Number
+	 * @note Radius of lite (if any)
+	 */
+	s16b cur_lite;
+
+	/** @var pspeed
+	 * @brief Number
+	 * @note Current global speed
+	 */
+	s16b pspeed;
+	/** @var speeds
+	 * @brief flags_type
+	 * @note Specific speeds, indexed by skills
+	 */
+	flags_type speeds;
+
+	/** @var notice
+	 * @brief Number
+	 * @note Special Updates (bit flags)
+	 */
+	u32b notice;
+	/** @var update
+	 * @brief Number
+	 * @note Pending Updates (bit flags)
+	 */
+	u32b update;
+	/** @var redraw
+	 * @brief flags_type
+	 * @note Normal Redraws
+	 */
+	flags_type redraw;
+	/** @var window
+	 * @brief Number
+	 * @note Window Redraws (bit flags)
+	 */
+	flags_type window;
+
+	/** @structvar recall_dungeon
+	 * @brief Number
+	 * @note Recall in which dungeon
+	 */
+	s16b recall_dungeon;
+	/** @structvar word_recall
+	 * @brief Number
+	 * @note Word of recall counter
+	 */
+	s16b word_recall;
+
+	/** @structvar energy
+	 * @brief Number
+	 * @note Current energy
+	 */
+	s32b energy;
+
+	/** @var stat_max
+	 * @brief flags_type
+	 * @note Current "maximal" stat values
+	 */
+	flags_type stat_max;
+	/** @var stat_cur
+	 * @brief flags_type
+	 * @note Current "natural" stat values
+	 */
+	flags_type stat_cur;
+	/** @var stat_add
+	 * @brief flags_type
+	 * @note Modifiers to stat values
+	 */
+	flags_type stat_add;
+	/** @var stat_ind
+	 * @brief flags_type
+	 * @note Current stat values
+	 */
+	flags_type stat_ind;
+	/** @var stat_top
+	 * @brief flags_type
+	 * @note Maximal modified stats
+	 */
+	flags_type stat_top;
+	/** @var stat_cnt
+	 * @brief flags_type
+	 * @note Counter for temporary drains
+	 */
+	flags_type stat_cnt;
+	/** @var stat_los
+	 * @brief flags_type
+	 * @note Amount of temporary drains
+	 */
+	flags_type stat_los;
+
+	/** @var intrinsic_flags
+	 * @brief flags_type
+	 */
+	flags_type intrinsic@intrinsic_flags;
+
+	/** @var resists
+	 * @brief flags_type
+	 * @note Summary of all resistances
+	 */
+	flags_type resists;
+
+	/** @var absorbs
+	 * @brief flags_type
+	 * @note Summary of all absorbs
+	 */
+	flags_type absorbs;
+
+	/** @var skill_bonuses
+	 * @brief flags_type
+	 * @note Bonus to skill levels
+	 */
+	flags_type skill_bonuses;
+
+
+	/** @var cumber_armor
+	 * @brief Boolean
+	 * @note Mana draining armor
+	 */
+	bool cumber_armor;
+	/** @var cumber_glove
+	 * @brief Boolean
+	 * @note Mana draining gloves
+	 */
+	bool cumber_glove;
+	/** @var heavy_wield
+	 * @brief Boolean
+	 * @note Heavy weapon
+	 */
+	bool heavy_wield;
+	/** @var heavy_shoot
+	 * @brief Boolean
+	 * @note Heavy shooter
+	 */
+	bool heavy_shoot;
+	/** @var icky_wield
+	 * @brief Boolean
+	 * @note Icky weapon
+	 */
+	bool icky_wield;
+
+	/** @var dis_to_h
+	 * @brief Number
+	 * @note Known bonus to hit
+	 */
+	s16b dis_to_h;
+	/** @var dis_to_d
+	 * @brief Number
+	 * @note Known bonus to dam
+	 */
+	s16b dis_to_d;
+	/** @var dis_to_a
+	 * @brief Number
+	 * @note Known bonus to ac
+	 */
+	s16b dis_to_a;
+
+	/** @var dis_ac
+	 * @brief Number
+	 * @note Known base ac
+	 */
+	s16b dis_ac;
+
+	/** @var to_l
+	 * @brief Number
+	 * @note Bonus to life
+	 */
+	s16b to_l;
+	/** @var to_m
+	 * @brief Number
+	 * @note Bonus to mana
+	 */
+	s16b to_m;
+	/** @var to_s
+	 * @brief Number
+	 * @note Bonus to spell
+	 */
+	s16b to_s;
+	/** @var to_h
+	 * @brief Number
+	 * @note Bonus to hit
+	 */
+	s16b to_h;
+	/** @var to_d
+	 * @brief Number
+	 * @note Bonus to dam
+	 */
+	s16b to_d;
+	/** @var to_a
+	 * @brief Number
+	 * @note Bonus to ac
+	 */
+	s16b to_a;
+
+	/** @var num_blow
+	 * @brief Number
+	 * @note Number of blows
+	 */
+	s16b num_blow;
+	/** @var num_fire
+	 * @brief Number
+	 * @note Number of shots
+	 */
+	s16b num_fire;
+
+	/** @var extra_blows
+	 * @brief Number
+	 * @note Number of extra blows
+	 */
+	s16b extra_blows;
+	/** @var extra_shots
+	 * @brief Number
+	 * @note Number of extra shots
+	 */
+	s16b extra_shots;
+
+	/** @var ac
+	 * @brief Number
+	 * @note Base ac
+	 */
+	s16b ac;
+
+	/** @var antimagic
+	 * @brief Number
+	 * @note Power of the anti magic field
+	 */
+	byte antimagic;
+	/** @var antimagic_dis
+	 * @brief Number
+	 * @note Radius of the anti magic field
+	 */
+	byte antimagic_dis;
+
+	/** @var see_infra
+	 * @brief Number
+	 * @note Infravision range
+	 */
+	s16b see_infra;
+
+	/** @var skill_dis
+	 * @brief Number
+	 * @note Skill: Disarming
+	 */
+	s16b skill_dis;
+	/** @var skill_dev
+	 * @brief Number
+	 * @note Skill: Magic Devices
+	 */
+	s16b skill_dev;
+	/** @var skill_sav
+	 * @brief Number
+	 * @note Skill: Saving throw
+	 */
+	s16b skill_sav;
+	/** @var skill_stl
+	 * @brief Number
+	 * @note Skill: Stealth factor
+	 */
+	s16b skill_stl;
+	/** @var skill_srh
+	 * @brief Number
+	 * @note Skill: Searching ability
+	 */
+	s16b skill_thn;
+	/** @var skill_thb
+	 * @brief Number
+	 * @note Skill: To hit (shooting)
+	 */
+	s16b skill_thb;
+	/** @var skill_tht
+	 * @brief Number
+	 * @note Skill: To hit (throwing)
+	 */
+	s16b skill_tht;
+
+	/** @var skill_points
+	 * @brief Number
+	 */
+	s16b skill_points;
+	/** @var combat_style
+	 * @brief Number
+	 */
+	s16b combat_style;
+	/** @var use_piercing_shots
+	 * @brief Number
+	 * @note for archery
+	 */
+	s16b use_piercing_shots;
+
+	/** @var control
+	 * @brief Number
+	 * @note Controlled monster
+	 */
+	s16b control;
+	/** @var control_dir
+	 * @brief Number
+	 * @note Controlled monster
+	 */
+	byte control_dir;
+	/** @var companion_killed
+	 * @brief Number
+	 * @note Number of companion death
+	 */
+	s16b companion_killed;
+	/** @var black_breath
+	 * @brief Boolean
+	 * @note The Tolkien's Black Breath
+	 */
+	bool black_breath;
+	/** @var body_monster
+	 * @brief monster_type
+	 * @note In which body is the player
+	 */
+	monster_type body_monster; /* In which body is the player */
+
+	/** @var extra_body_parts
+	 * @brief flags_type
+	 * @note Various body modifiers
+	 */
+	flags_type extra_body_parts;
+
+	/** @var powers
+	 * @brief flags_type
+	 * @note Actual powers
+	 */
+	flags_type powers;
+	/** @var powers_mod
+	 * @brief flags_type
+	 * @note Intrinsinc powers
+	 */
+	flags_type powers_mod;
+
+	/** @var necro_extra
+	 * @brief Number
+	 * @note Necro powers
+	 */
+	u32b necro_extra;
+
+	/** @var flags
+	 * @brief flags_type
+	 * @note flags
+	 */
+	flags_type flags;
+
+	/** @var tactic
+	 * @brief String
+	 * @note from 128-4 extremely coward to 128+4 berserker
+	 */
+	char tactic;
+
+	/** @var movement
+	 * @brief String
+	 * @note base movement way
+	 */
+	char movement;
+
+	/*** Temporary fields ***/
+
+	/** @var leaving
+	 * @brief Boolean
+	 * @note True if player is leaving
+	 */
+	bool leaving;
+};
+/* @} */
+
+
+/** @var energy_use
+ * @brief Number
+ * @note Energy use for an action (0 if action does not take a turn).
+ */
+extern s32b energy_use;
+
+/** @var alive
+ * @brief Boolean
+ * @note Is the player alive
+ */
+extern bool alive;
+
+/** @var death
+ * @brief Boolean
+ * @note Is the player dead
+ */
+extern bool death;
+
+$static void set_died_from(cptr from){strcpy(died_from, from);}
+/** @fn set_died_from(cptr from)
+ * @brief Sets the reason fo death.
+ */
+static void set_died_from(cptr from);
+
+/** @var player
+ * @brief player_type
+ * @note The player.
+ */
+extern player_type *p_ptr @ player;
+/** @var max_dp_idx
+ * @brief player_type
+ */
+extern u16b max_dp_idx;
+/** @var descriptor_info[max_dp_idx]
+ * @brief player_descriptor
+ */
+extern player_descriptor descriptor_info[max_dp_idx];
+/** @var flush_failure
+ * @brief Boolean
+ */
+extern bool flush_failure;
+
+/** @fn check_experience(void)
+ * @brief Check if player experience level has changed.
+ * @return void
+ * @note
+ * If a player has achieved a level for the first time, give a corruption
+ * (1 chance in 3) if it applies, increase skill points, check ability levels,
+ * and add a note if notes are taken.
+ * @note (see file xtra2.c)
+ */
+extern void check_experience(void);
+
+/** @fn check_experience_obj(object_type *o_ptr)
+ * @brief Check if object "o_ptr" experience level has changed.\n
+ * @param *o_ptr object_type \n the object
+ * @brief Object
+ * @note
+ * If an object has achieved a level for the first time, apply gains.
+ * @note (see file xtra2.c)
+ */
+extern void check_experience_obj(object_type *o_ptr);
+
+/** @fn gain_exp(s32b amount)
+ * @brief Gain "amount" of experience.
+ * @param amount Number \n the experience points to gain.
+ * @brief Experience
+ * @return void
+ * @note
+ * Count the number of objects which will gain experience. The objects share
+ * equally 2/3 of "amount". Give corruption if it applies. Gain experience.
+ * If experience is less than maximum, then increase maximum experience by 20%
+ * of "amount". Check for level change and print experience (check_experience).
+ * @note (see file xtra2.c)
+ */
+extern void gain_exp(s32b amount);
+
+/** @fn lose_exp(s32b amount)
+ * @brief Decrease experience by "amount".
+ * @param amount Number \n the experience points to lose.
+ * @brief Experience
+ * @return void
+ * @note
+ * Experience can not fall below zero. Check for level change and print
+ * experience (check_experience).
+ * @note (see file xtra2.c)
+ */
+extern void lose_exp(s32b amount);
+
+/** @fn no_lite(void)
+ * @brief Return true if the player's grid is dark.
+ * @return Boolean \n TRUE if the player's grid is dark, otherwise FALSE.
+ * @note (see file cave.c)
+ */
+extern bool no_lite(void);
+
+/** @fn extern void do_cmd_debug(void)
+ * @brief Do a debug (wizard) command.
+ */
+extern void do_cmd_debug(void);
+
+/** @var dun_level
+ * @brief Number
+ * @note Current dungeon level
+ */
+extern s16b dun_level;
+extern s16b old_dun_level;
+
+/* Misc */
+
+/** @fn change_wild_mode()
+ * @brief Toggle between big map and little map.
+ * @return void
+ * @note
+ * If the player is immovable, and the map is big, the player receives a
+ * warning and is allowed to proceed.
+ * @note
+ * If the player is about to be recalled, and the map is big, the map is
+ * not changed.
+ * @note
+ * The map is changed. The game is saved if autosave is set to "levels".
+ * @note (see file spells2.c)
+ */
+extern void change_wild_mode();
+
+/** @name Winner states
+ * @{ */
+/** @def WINNER_NORMAL
+ * @note Player has killed Morgoth */
+#define WINNER_NORMAL	   1
+
+/** @def WINNER_ULTRA
+ * @note Player has killed Melkor */
+#define WINNER_ULTRA	    2
+/** @} */
+
+
+/** @var wizard
+ * @brief Boolean
+ * @note TRUE if player currently in Wizard mode, otherwise FALSE.
+ */
+extern bool wizard;
+
+/** @var noscore
+ * @brief Boolean
+ * @note TRUE if the game won't be scored , otherwise FALSE.
+ */
+extern bool noscore;
+
+/** @var total_winner
+ * @brief Number
+ * @note Game has been won (see WINNER_foo fields).
+ */
+extern u16b total_winner@winner_state;
+
+/** @var has_won
+ * @brief Number
+ * @note Game has been won (see WINNER_foo fields).
+ */
+extern u16b has_won;
+
+/** @var joke_monsters
+ * @brief Boolean
+ * @note TRUE if allowing joke monsters, otherwise FALSE.
+ */
+extern bool joke_monsters;
+
+extern bool exp_need;
+extern bool linear_stats;
+extern bool player_char_health;
+extern byte hitpoint_warn;
+
+$static char *lua_cnv_stat(s32b i) { static char buf[32]; cnv_stat(i, buf); return buf; }
+static char *lua_cnv_stat@cnv_stat(s32b i);
+
+extern s32b command_cmd;
+extern s16b command_arg;
+extern s16b command_rep;
+extern s16b command_dir;
+extern s16b command_see;
+extern s16b command_wrk;
+extern s16b command_new;
+extern bool command_new_do_keymap;
+
+extern s32b leaving_quest;
+
+extern u16b get_player_energy(s32b speed_id=-1);
+extern cptr get_speed_name(u32b index);
+extern cptr get_speed_desc(u32b index);
+extern u32b register_speed(cptr name, cptr desc);
+
+extern void notice_stuff(void);
+extern void update_stuff(void);
+extern void redraw_stuff(void);
+extern void window_stuff(void);
+extern void handle_stuff(void);
+
+extern const char *history[4];
+
+extern bool character_generated;
+extern bool character_dungeon;
+extern bool character_loaded;
+extern bool character_saved;
+extern bool character_xtra;
+
+extern void browse_school_spell(object_type *o_ptr);
+
+extern bool do_cmd_open_obj(s32b y, s32b x, s16b o_idx);
+extern bool do_cmd_open_aux(s32b y, s32b x, s32b dir);
+
+module birth {
+	extern bool no_begin_screen;
+	extern bool force_new_game;
+}
+
+extern void do_cmd_skill(void);
+extern void player_birth_skill();
+
+extern bool change_player_body(monster_type* new_body,
+                               monster_type* old_body = NULL);
+
+extern void do_cmd_suicide(void);
+

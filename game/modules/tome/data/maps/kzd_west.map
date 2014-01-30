@@ -1,0 +1,74 @@
+-- Khazad-dum, west gate
+
+map.define("kz_west.map")
+
+map.symbol{ symbol='*' feat=FEAT_MAP_BORDER info=0 }
+map.symbol{ symbol='x' feat=FEAT_PERM_INNER info=0 }
+map.symbol{ symbol='X' feat=FEAT_WALL_SOLID info=0 }
+
+map.symbol{ symbol='.' feat=FEAT_FLOOR info=6 }
+
+-- East Gate Exit
+map.symbol{ symbol='<' feat=FEAT_SHAFT_UP info=6 }
+-- West Gate Exit
+map.symbol{ symbol='>' feat=FEAT_SHAFT_DOWN dungeon=DUNGEON_KHAZAD_DUM info=6 }
+
+
+map.symbol{ symbol='T' feat=FEAT_TREES info=6 }
+map.symbol{ symbol='D' feat=FEAT_DEAD_TREE info=6 }
+map.symbol{ symbol='~' feat=FEAT_SHAL_WATER info=6 }
+map.symbol{ symbol=',' feat=FEAT_COBBLESTONE_ROAD info=6 }
+map.symbol{ symbol='+' feat=FEAT_DOOR info=6 }
+
+map.symbol{ symbol='W' feat=FEAT_SHAL_WATER monster=RACE_WATCHER_IN_THE_WATER }
+
+map.map
+{
+[[***********************************************]],
+[[*TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTXXXxx*]],
+[[*TT..TTTTTTTTT..T..TT.TTTTTTT..T.T.TTTT.TXXXxx*]],
+[[*.T..T...TT..TT..TT........T...T.TT.T..T.XXXxx*]],
+[[*...T.TT..T....TT.T...T....T.T...TTTTTT..XXXxx*]],
+[[*.....T.....TT..T...T...T.T.T....T..T.TT.XXXxx*]],
+[[*........T....................T....TT..TTXXXxx*]],
+[[*......T......T....T...T..TT.T...T.TT.T.TXXXxx*]],
+[[*..........................T...T..T..T..TXXXxx*]],
+[[*........T..................TT..T..T.TT.TXXXxx*]],
+[[*........................................XXXxx*]],
+[[*....T...............T.........T.T.....T.XXXxx*]],
+[[*.............T...........T.........T....XXXxx*]],
+[[*.................T...............T.....TXXXxx*]],
+[[*.........D................T.............XXXxx*]],
+[[*....D...................................XXXxx*]],
+[[*.................................D......XXXxx*]],
+[[*,,,,,.,....D...........................XXXXxx*]],
+[[*,,,,,,,,........D......................XXXXxx*]],
+[[*,,,,,,,,,...............D..............XXXXxx*]],
+[[*,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,XXXxx*]],
+[[*<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,+..>x*]],
+[[*..,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,XXXxx*]],
+[[*..........,,,,.........................XXXXxx*]],
+[[*.......................................XXXXxx*]],
+[[*.................D.....................XXXXxx*]],
+[[*.....D..................................XXXxx*]],
+[[*.D...............................D......XXXxx*]],
+[[*........~~~~~~~~~~~~....................XXXxx*]],
+[[*.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~........XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~....XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~W~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XXXxx*]],
+[[***********************************************]],
+}
+
+-- Starting position
+map.set_player(21, 1)
+

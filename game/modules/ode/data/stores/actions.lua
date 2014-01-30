@@ -1,0 +1,3 @@
+--
+-- Informations for the various store actions
+--

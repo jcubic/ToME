@@ -1,0 +1,343 @@
+BUNDLENAME = ToME 3
+BUNDLEDIR = $(BUNDLENAME).app
+CONTENTSDIR = $(BUNDLEDIR)/Contents
+BINDIR = $(CONTENTSDIR)/MacOS
+RESOURCEDIR = $(CONTENTSDIR)/Resources
+FRAMEWORKDIR = $(CONTENTSDIR)/Frameworks
+LIBDIR = $(RESOURCEDIR)
+
+CC = MACOSX_DEPLOYMENT_TARGET=10.4 cc
+
+COPTS = -Os -g -pipe -Wno-pointer-sign
+
+DEFINES = -DUSE_SDL -DUSE_MACOSX -DUSE_TOME_MAIN \
+	-DUSE_PRECISE_CMOVIE -DUSE_UNIXSOCK \
+	-DUSE_EGO_GRAPHICS -DUSE_TRANSPARENCY -DSUPPORT_GAMMA \
+	-DLUA_ERROR_TO_TERMINAL \
+	-DFORCE_TOME_CFG_PATH=macToMEConfigPath \
+	-DPRIVATE_USER_PATH="\"Library/Application Support/ToME\""
+LIBS = -framework Cocoa
+
+# SDL is required
+SDL_FRAMEWORK_PATH = /Library/Frameworks
+SDLINCLUDES = -I$(SDL_FRAMEWORK_PATH)/SDL.framework/Headers \
+              -I$(SDL_FRAMEWORK_PATH)/SDL_net.framework/Headers \
+              -I$(SDL_FRAMEWORK_PATH)/SDL_image.framework/Headers \
+              -I$(SDL_FRAMEWORK_PATH)/SDL_ttf.framework/Headers \
+              -I$(SDL_FRAMEWORK_PATH)/SDL_gfx.framework/Headers \
+              -I$(SDL_FRAMEWORK_PATH)/SDL_mixer.framework/Headers
+SDLLIBS += -F$(SDL_FRAMEWORK_PATH) -framework SDL -framework SDL_net \
+           -framework SDL_image -framework SDL_ttf -framework SDL_gfx \
+           -framework SDL_mixer
+
+COPTS += -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+LDFLAGS += -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+
+#
+# Physfs(FS abstraction lib)
+#
+TOMEINCLUDES += -Iphysfs -Iphysfs/zlib114
+DEFINES += -DPHYSFS_NO_CDROM_SUPPORT -DPHYSFS_SUPPORTS_ZIP
+PHYSFSOBJS += \
+	io.o \
+	physfs/archiver/dir.o \
+	physfs/archiver/zip.o \
+	physfs/physfs.o \
+	physfs/physfs_byteorder.o \
+	physfs/physfsrwops.o \
+	physfs/platform/posix.o \
+	physfs/platform/unix.o \
+	physfs/zlib114/adler32.o \
+	physfs/zlib114/compress.o \
+	physfs/zlib114/crc32.o \
+	physfs/zlib114/deflate.o \
+	physfs/zlib114/infblock.o \
+	physfs/zlib114/infcodes.o \
+	physfs/zlib114/inffast.o \
+	physfs/zlib114/inflate.o \
+	physfs/zlib114/inftrees.o \
+	physfs/zlib114/infutil.o \
+	physfs/zlib114/gzio.o \
+	physfs/zlib114/trees.o \
+	physfs/zlib114/uncompr.o \
+	physfs/zlib114/zutil.o
+
+#
+# Lua support
+#
+
+TOMEINCLUDES += -Ilua -I.
+DEFINES += -DUSE_LUA
+
+LUAOBJS = \
+	lua_bind.o \
+	script.o \
+	w_dun.o \
+	w_fs.o \
+	w_mnster.o \
+	w_net.o \
+	w_obj.o \
+	w_play_c.o \
+	w_player.o \
+	w_quest.o \
+	w_sound.o \
+	w_spells.o \
+	w_util.o \
+	w_z_pack.o \
+	lua/luac.o
+
+TOLUAOBJS = \
+	z-form.o \
+	z-util.o \
+	z-virt.o \
+	lua/lapi.o \
+	lua/lauxlib.o \
+	lua/lbaselib.o \
+	lua/lcode.o \
+	lua/ldblib.o \
+	lua/ldebug.o \
+	lua/ldo.o \
+	lua/lfunc.o \
+	lua/lgc.o \
+	lua/liolib.o \
+	lua/llex.o \
+	lua/lmem.o \
+	lua/lobject.o \
+	lua/lparser.o \
+	lua/lstate.o \
+	lua/lstring.o \
+	lua/lstrlib.o \
+	lua/ltable.o \
+	lua/ltests.o \
+	lua/ltm.o \
+	lua/lundump.o \
+	lua/lvm.o \
+	lua/lzio.o \
+	lua/tolua_bd.o \
+	lua/tolua_eh.o \
+	lua/tolua_gp.o \
+	lua/tolua_lb.o \
+	lua/tolua_rg.o \
+	lua/tolua_tm.o \
+	lua/tolua_tt.o
+
+TOLUA  = ./tolua
+
+TOLUADEP = $(PHYSFSOBJS) $(TOLUAOBJS) lua/tolua.o lua/tolualua.o
+
+#
+# The C part of the T-Engine itself
+#
+
+TOMEOBJS = \
+	birth.o \
+	cache.o \
+	cave.o \
+	cmd1.o \
+	cmd2.o \
+	cmd3.o \
+	cmd4.o \
+	cmd5.o \
+	cmd6.o \
+	cmd7.o \
+	cmovie.o \
+	dungeon.o \
+	files.o \
+	flags.o \
+	gen_evol.o \
+	gen_maze.o \
+	generate.o \
+	ghost.o \
+	gods.o \
+	help.o \
+	init1.o \
+	init2.o \
+	levels.o \
+	loadsave.o \
+	main.o \
+	main-sdl.o \
+	melee1.o \
+	melee2.o \
+	modules.o \
+	monster1.o \
+	monster2.o \
+	monster3.o \
+	music.o \
+	net.o \
+	notes.o \
+	object1.o \
+	object2.o \
+	object3.o \
+	pathfind.o \
+	plots.o \
+	powers.o \
+	randart.o \
+	sdl-events.o \
+	sdl-glyph.o \
+	sdl-log.o \
+	sdl-utility.o \
+	SFMT.o \
+	skills.o \
+	speed.o \
+	spells1.o \
+	spells2.o \
+	squeltch.o \
+	store.o \
+	tables.o \
+	traps.o \
+	util.o \
+	variable.o \
+	vector.o \
+	wild.o \
+	wizard1.o \
+	wizard2.o \
+	xtra1.o \
+	xtra2.o \
+	z-rand.o \
+	z-term.o \
+	physfs/zlib114/ioapi.o \
+	physfs/zlib114/zip.o
+
+OBJCOBJS = \
+	mac/SDLMain.o
+
+#
+# Compiler options
+#
+
+CFLAGS = $(TOMEINCLUDES) $(SDLINCLUDES) $(COPTS) $(INCLUDES) $(DEFINES)
+
+ALLLIBS = $(TOMELIBS) $(SDLLIBS) $(LIBS)
+
+
+#
+# Build the binary. The new base target.
+#
+
+TARGET = tome
+
+default: bundle
+
+$(TOLUA): $(TOLUADEP)
+	$(CC) $(LDFLAGS) -o $@ $(TOLUADEP) $(ALLLIBS)
+
+TARGETDEP = $(OBJCOBJS) $(TOMEOBJS) $(PHYSFSOBJS) $(LUAOBJS) $(TOLUAOBJS)
+
+$(TARGET): $(TARGETDEP)
+	$(CC) $(LDFLAGS) -o $@ $(TARGETDEP) $(ALLLIBS)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+.m.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+#
+# An install rule.
+#
+
+bundle: $(TARGET)
+	@echo Creating bundle framework...
+	@[ -d "$(BUNDLEDIR)" ] || mkdir "$(BUNDLEDIR)"
+	@/Developer/Tools/SetFile -a B "$(BUNDLEDIR)"
+	@[ -d "$(CONTENTSDIR)" ] || mkdir "$(CONTENTSDIR)"
+	@[ -d "$(BINDIR)" ]  || mkdir "$(BINDIR)"
+	@[ -d "$(RESOURCEDIR)" ]  || mkdir "$(RESOURCEDIR)"
+	@[ -d "$(FRAMEWORKDIR)" ]  || mkdir "$(FRAMEWORKDIR)"
+	@echo Copying ToME files...
+	@rsync -ar $(TARGET) "$(BINDIR)"
+	@rsync -ar mac/ToME.icns "$(RESOURCEDIR)"
+	@rsync -ar mac/Info.plist "$(CONTENTSDIR)"/Info.plist
+	@rsync -r --exclude="*CVS*" --exclude="*.bdf" --exclude="*.fnt" \
+	         --exclude="*.FNT" --exclude="*.FON" --exclude="*.hex" \
+	         ../game/* "$(RESOURCEDIR)/game/"
+	@rsync mac/tome.cfg "$(RESOURCEDIR)"
+	@echo Copying frameworks...
+	@rsync -ar $(SDL_FRAMEWORK_PATH)/SDL.framework "$(FRAMEWORKDIR)"
+	@/Developer/Tools/SetFile -a B "$(FRAMEWORKDIR)/SDL.framework"
+	@rsync -ar $(SDL_FRAMEWORK_PATH)/SDL_net.framework "$(FRAMEWORKDIR)"
+	@/Developer/Tools/SetFile -a B "$(FRAMEWORKDIR)/SDL_net.framework"
+	@rsync -ar $(SDL_FRAMEWORK_PATH)/SDL_image.framework "$(FRAMEWORKDIR)"
+	@/Developer/Tools/SetFile -a B "$(FRAMEWORKDIR)/SDL_image.framework"
+	@rsync -ar $(SDL_FRAMEWORK_PATH)/SDL_ttf.framework "$(FRAMEWORKDIR)"
+	@/Developer/Tools/SetFile -a B "$(FRAMEWORKDIR)/SDL_ttf.framework"
+	@rsync -ar $(SDL_FRAMEWORK_PATH)/SDL_gfx.framework "$(FRAMEWORKDIR)"
+	@/Developer/Tools/SetFile -a B "$(FRAMEWORKDIR)/SDL_gfx.framework"
+	@rsync -ar $(SDL_FRAMEWORK_PATH)/SDL_mixer.framework "$(FRAMEWORKDIR)"
+	@/Developer/Tools/SetFile -a B "$(FRAMEWORKDIR)/SDL_mixer.framework"
+
+APPVERSION := `mac/getversion`
+IMAGENAME := ToME $(APPVERSION)
+IMAGEPATH := /Volumes/$(IMAGENAME)
+
+image: bundle
+	[ -d "$(IMAGEPATH)" ] && diskutil eject "$(IMAGEPATH)" || true
+
+	hdiutil create -fs HFS+ -volname "$(IMAGENAME)" -ov -type SPARSE -attach "$(IMAGENAME)"
+	cp -r "$(BUNDLEDIR)" ../changes.txt ../credits.txt ../changes.old "$(IMAGEPATH)"
+	cp mac/Image-DS_Store "$(IMAGEPATH)/.DS_Store"
+	diskutil eject "$(IMAGEPATH)"
+
+	rm -f "$(IMAGENAME).dmg"
+	hdiutil convert "$(IMAGENAME).sparseimage" -format UDZO -o "$(IMAGENAME)"
+	rm "$(IMAGENAME).sparseimage"
+
+#
+# Housekeeping
+#
+
+ALLOBJS = $(TOMEOBJS) $(TOLUADEP) $(LUAOBJS)
+ALLSRCS = `echo $(ALLOBJS) | sed 's/\.o/.c/g'`
+
+clean:
+	rm -f *.bak w_*.c $(OBJCOBJS) $(ALLOBJS) $(TOLUA) $(TARGET)
+	rm -rf "$(BUNDLEDIR)"
+
+depend:
+	makedepend -f makefile.osx $(INCLUDES) $(DEFINES) -D__MAKEDEPEND__ $(ALLSRCS)
+
+#
+# Lua library compilation rules
+#
+
+w_dun.c: dungeon.pkg $(TOLUA)
+	$(TOLUA) -n dungeon -o w_dun.c dungeon.pkg
+
+w_fs.c: physfs.pkg $(TOLUA)
+	$(TOLUA) -n physfs -o w_fs.c physfs.pkg
+
+w_mnster.c: monster.pkg $(TOLUA)
+	$(TOLUA) -n monster -o w_mnster.c monster.pkg
+
+w_net.c: net.pkg $(TOLUA)
+	$(TOLUA) -n net -o w_net.c net.pkg
+
+w_obj.c: object.pkg $(TOLUA)
+	$(TOLUA) -n object -o w_obj.c object.pkg
+
+w_play_c.c: player_c.pkg $(TOLUA)
+	$(TOLUA) -n player_c -o w_play_c.c player_c.pkg
+
+w_player.c: player.pkg $(TOLUA)
+	$(TOLUA) -n player -o w_player.c player.pkg
+
+w_quest.c: quest.pkg $(TOLUA)
+	$(TOLUA) -n quest -o w_quest.c quest.pkg
+
+w_sound.c: sound.pkg $(TOLUA)
+	$(TOLUA) -n sound -o w_sound.c sound.pkg
+
+w_spells.c: spells.pkg $(TOLUA)
+	$(TOLUA) -n spells -o w_spells.c spells.pkg
+
+w_util.c: util.pkg $(TOLUA)
+	$(TOLUA) -n util -o w_util.c util.pkg
+
+w_z_pack.c: z_pack.pkg $(TOLUA)
+	$(TOLUA) -n z_pack -o w_z_pack.c z_pack.pkg
+
+# Uncomment if you have gel(and need to rebuild the cache generator)
+#cache.c: cache.ls
+#	gel -f lua/convert.gema cache.ls cache.c
+
+# DO NOT DELETE THIS LINE - make depend depends on it.

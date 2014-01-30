@@ -1,0 +1,564 @@
+/* File: player_c.pkg */
+
+/*
+ * Purpose: Lua interface defitions for player classes.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+
+/** @def SKILL_EXCLUSIVE
+ * @brief Flag to tell exclusive skills
+ */
+#define SKILL_EXCLUSIVE         9999
+
+
+/** @struct skill_type
+ * @brief Skills
+ * @{ */
+struct skill_type
+{
+	/** @var name
+	 * @brief String
+	 * @note Name
+	 */
+	cptr name;
+	/** @var desc
+	 * @brief String
+	 * @note Description
+	 */
+	cptr desc;
+	/** @var action_desc[MAX_SKILL_ACTION]
+	 * @brief String
+	 * @note Action Description
+	 */
+	cptr action_desc[MAX_SKILL_ACTION];
+
+	/** @var action_mkey[MAX_SKILL_ACTION]
+	 * @brief Number
+	 * @note Action do to
+	 */
+	s16b action_mkey[MAX_SKILL_ACTION];
+
+	/** @var i_value
+	 * @brief Number
+	 * @note Actual value
+	 */
+	u32b i_value;
+	/** @var i_mod
+	 * @brief Number
+	 * @note Modifier(1 skill point = modifier skill)
+	 */
+	u16b i_mod;
+
+	/** @var value
+	 * @brief Number
+	 * @note Actual value
+	 */
+	u32b value;
+	/** @var mod
+	 * @brief Number
+	 * @note Modifier(1 skill point = modifier skill)
+	 */
+	u16b mod;
+	/** @var rate
+	 * @brief Number
+	 * @note Modifier decreasing rate
+	 */
+	s16b rate;
+
+	/** @var uses
+	 * @brief Number
+	 * @note Number of times used
+	 */
+	u32b uses;
+
+	/** @var action
+	 * @brief flags_type
+	 * @note List of actions against other skills
+	 */
+	flags_type action;
+
+
+	/** @var father
+	 * @brief Number
+	 * @note Father in the skill tree
+	 */
+	s16b father;
+	/** @var dev
+	 * @brief Boolean
+	 * @note Is the branch developped ?
+	 */
+	bool dev;
+	/** @var order
+	 * @brief Number
+	 * @note Order in the tree
+	 */
+	s16b order;
+	/** @var hidden
+	 * @brief Boolean
+	 * @note Innactive
+	 */
+	bool hidden;
+};
+/** @} */
+
+
+/** @var old_max_s_idx
+ * @brief Number
+ * @note Previous maximum skill index
+ */
+extern u16b old_max_s_idx;
+/** @var max_s_idx
+ * @brief Number
+ * @note Current maximum skill index
+ */
+extern u16b max_s_idx;
+/** @var s_info[max_s_idx]
+ * @brief skill_type
+ * @note Array of player skills
+ */
+skill_type s_info[max_s_idx];
+
+
+/** @fn get_skill_raw(s32b skill)
+ * @param skill Number \n the index of skill in skill array.
+ * @brief Skill index
+ * @return Number
+ * @note
+ */
+extern s32b get_skill_raw(s32b skill);
+
+/** @fn get_skill(s32b skill)
+ * @brief Return the value of skill with index "skill" in skill array.
+ * @param skill Number \n the index of skill in skill array.
+ * @brief Skill index
+ * @return Number \n The value of the skill with index "skill" in the skill
+ * array.
+ * @note (see file skills.c)
+ */
+extern s32b get_skill(s32b skill);
+
+/** @fn get_skill_scale(s32b skill, s32b scale)
+ * @brief Return the value of skill with index "skill" in skill array rescaled
+ * to a maximum of "scale".
+ * @param skill Number \n the index of skill in skill array.
+ * @brief Skill index
+ * @param scale Number \n the maximum rescaled skill value.
+ * @brief Scaled maximum
+ * @return Number \n The rescaled value of the skill with index "skill" in the
+ * skill array.
+ * @note (see file skills.c)
+ */
+extern s32b get_skill_scale(s32b skill, s32b scale);
+
+/** @fn do_get_new_skill()
+ * @brief Player select one of four new skills.
+ * @return void
+ * @note (see file skills.c)
+ */
+extern void do_get_new_skill();
+
+/** @fn find_skill(cptr name)
+ * @brief Return the index of skill with name "name".
+ * @param name String \n the name of the skill.
+ * @brief Skill name
+ * @return Number \n The index of the skill with name "name" in the skill
+ * array.
+ * @note
+ * The search is case sensitive.
+ * If no skills match the name, -1 is returned.
+ * @note (see file skills.c)
+ */
+extern s16b find_skill(cptr name);
+
+/** @fn find_skill_i(cptr name)
+ * @brief Return the index of skill with name "name".
+ * @param name String \n the name of the skill.
+ * @brief Skill name
+ * @return Number \n The index of the skill with name "name" in the skill
+ * array.
+ * @note
+ * The search ignores case.
+ * If no skills match the name, -1 is returned.
+ * @note (see file skills.c)
+ */
+extern s16b find_skill_i(cptr name);
+
+
+/** @def ACTIVATE_SKILL
+ */
+#define ACTIVATE_SKILL		0
+/** @def BROWSE_SKILL
+ */
+#define BROWSE_SKILL		1
+/** @def MAX_SKILL_ACTION
+ */
+#define MAX_SKILL_ACTION	2
+
+
+/** @struct ability_type
+ * @brief Abilities
+ * @{ */
+struct ability_type
+{
+	/** @var name
+	 * @brief String
+	 * @note Ability name
+	 */
+	cptr name;
+
+	/** @var name
+	 * @brief String
+	 * @note Ability description
+	 */
+	cptr desc;
+
+	/** @var action_mkey[MAX_SKILL_ACTION]
+	 * @brief Number
+	 * @note Action do to
+	 */
+	s16b action_mkey[MAX_SKILL_ACTION];
+
+	/** @var cost
+	 * @brief Number
+	 * @note Skill points cost
+	 */
+	s16b cost;
+
+	/** @var acquired
+	 * @brief Boolean
+	 * @note Has the player actually got it ?
+	 */
+	bool acquired;
+
+	/** @var hidden
+	 * @brief Boolean
+	 * @note If it actually available to buy ?
+	 */
+	bool hidden;
+};
+/** @} */
+
+
+/** @fn find_ability(cptr name)
+ * @brief Return the index of ability with name "name".
+ * @param name String \n the name of the ability.
+ * @brief Ability name
+ * @return Number \n The index of the ability with name "name" in the ability
+ * array.
+ * @note
+ * The search is case sensitive.
+ * If no abilities match the name, -1 is returned.
+ * @note (see file skills.c)
+ */
+extern s16b find_ability(cptr name);
+
+/** @fn has_ability(s32b ab)
+ * @brief Does the player have ability "ab"?
+ * @param ab Number \n the index of ability in ability array.
+ * @brief Ability index
+ * @return Boolean \n TRUE if player has the ability, otherwise FALSE.
+ * @note (see file skills.c)
+ */
+extern bool has_ability(s32b ab);
+
+/** @var max_ab_idx
+ * @brief Number
+ * @note Maximum ability index
+ */
+extern s16b max_ab_idx;
+
+/** @var ab_info[max_ab_idx]
+ * @brief ability_type
+ * @note Array of player abilities
+ */
+extern ability_type ab_info[max_ab_idx];
+
+
+/** @fn find_player_descriptor(cptr name)
+ * @param name String
+ * @return Number
+ * @note
+ */
+extern s32b find_player_descriptor(cptr name);
+/** @fn find_power(cptr name)
+ * @param name String
+ * @return Number
+ * @note
+ */
+extern s32b find_power(cptr name);
+
+
+/** @struct player_descriptor
+ * @brief Player Descriptor
+ * @{ */
+struct player_descriptor
+{
+	/** @var id
+	 * @brief Number
+	 * @note Index of the descriptor
+	 */
+	s16b id;
+
+	/** @var type
+	 * @brief String
+	 * @note Type of the descriptor
+	 */
+	cptr type;
+	/** @var title
+	 * @brief String
+	 * @note Name of the descriptor
+	 */
+	cptr title;
+	/** @var desc
+	 * @brief String
+	 */
+	cptr desc;
+	/** @var place
+	 * @brief Number
+	 * @note
+	 * SUBRACE_PLACE_AFTER = race race modifier,
+	 * SUBRACE_PLACE_BEFORE = Race modifier race,
+	 * SUBRACE_PLACE_REPLACE = Race modifier
+	 */
+	byte place;
+
+	/** @var adj
+	 * @brief flags_type
+	 * @note Stat bonuses
+	 */
+	flags_type adj;
+
+	/** @var luck
+	 * @brief String
+	 * @note Luck
+	 */
+	char luck;
+
+	/** @var mana
+	 * @brief Number
+	 * @note Mana %
+	 */
+	s16b mana;
+	/** @var blow_num
+	 * @brief Number
+	 */
+	s16b blow_num;
+	/** @var blow_wgt
+	 * @brief Number
+	 */
+	s16b blow_wgt;
+	/** @var blow_mul
+	 * @brief Number
+	 */
+	s16b blow_mul;
+	/** @var extra_blows
+	 * @brief Number
+	 */
+	s16b extra_blows;
+
+	/** @var dis
+	 * @brief Number
+	 * @note disarming
+	 */
+	s16b dis;
+	/** @var dev
+	 * @brief Number
+	 * @note magic devices
+	 */
+	s16b dev;
+	/** @var sav
+	 * @brief Number
+	 * @note saving throw
+	 */
+	s16b sav;
+	/** @var stl
+	 * @brief Number
+	 * @note stealth
+	 */
+	s16b stl;
+	/** @var srh
+	 * @brief Number
+	 * @note search ability
+	 */
+	s16b srh;
+	/** @var fos
+	 * @brief Number
+	 * @note search frequency
+	 */
+	s16b fos;
+	/** @var thn
+	 * @brief Number
+	 * @note combat (normal)
+	 */
+	s16b thn;
+	/** @var thb
+	 * @brief Number
+	 * @note combat (shooting)
+	 */
+	s16b thb;
+
+	/** @var mhp
+	 * @brief Number
+	 * @note Race hit-dice modifier
+	 */
+	byte mhp;
+	/** @var exp
+	 * @brief Number
+	 * @note Race experience factor
+	 */
+	u16b exp;
+
+	/** @var b_age
+	 * @brief Number
+	 * @note base age
+	 */
+	byte b_age;
+	/** @var m_age
+	 * @brief Number
+	 * @note mod age
+	 */
+	byte m_age;
+
+	/** @var m_b_ht
+	 * @brief Number
+	 * @note base height (males)
+	 */
+	byte m_b_ht;
+	/** @var m_m_ht
+	 * @brief Number
+	 * @note mod height (males)
+	 */
+	byte m_m_ht;
+	/** @var m_b_wt
+	 * @brief Number
+	 * @note base weight (males)
+	 */
+	byte m_b_wt;
+	/** @var m_m_wt
+	 * @brief Number
+	 * @note mod weight (males)
+	 */
+	byte m_m_wt;
+
+	/** @var f_b_ht
+	 * @brief Number
+	 * @note base height (females)
+	 */
+	byte f_b_ht;
+	/** @var f_m_ht
+	 * @brief Number
+	 * @note mod height (females)
+	 */
+	byte f_m_ht;
+	/** @var f_b_wt
+	 * @brief Number
+	 * @note base weight (females)
+	 */
+	byte f_b_wt;
+	/** @var f_m_wt
+	 * @brief Number
+	 * @note mod weight (females)
+	 */
+	byte f_m_wt;
+
+	/** @var infra
+	 * @brief Number
+	 * @note Infra-vision range
+	 */
+	byte infra;
+
+	/** @var choice
+	 * @brief flags_type
+	 * @note Legal other descriptors choices
+	 */
+	flags_type choice;
+
+	/** @var powers[4]
+	 * @brief Number
+	 * @note Powers of the race
+	 */
+	s16b powers[4];
+
+	/** @var body_parts
+	 * @brief flags_type
+	 * @note To help to decide what to use when body changing
+	 */
+	flags_type body_parts;
+
+	/** @var chart
+	 * @brief String
+	 * @note Chart history
+	 */
+	cptr chart;
+
+	/** @var flags
+	 * @brief flags_type
+	 * @note flags
+	 */
+	flags_type flags;
+
+	/** @var oflags[200]
+	 * @brief flags_type
+	 * @note flags
+	 */
+	flags_type oflags[200];
+
+	/** @var skill_base
+	 * @brief flags_type
+	 */
+	flags_type skill_base;
+	/** @var skill_mod
+	 * @brief flags_type
+	 */
+	flags_type skill_mod;
+
+	/** @var objects
+	 * @brief flags_type
+	 * @note Starting objects
+	 */
+	flags_type objects;
+
+	/** @var abilities
+	 * @brief flags_type
+	 * @note Abilities to be gained by level (doesnt take prereqs in account)
+	 */
+	flags_type abilities;
+
+	/** @var load_script
+	 * @brief String
+	 */
+	cptr load_script;
+};
+/** @} */

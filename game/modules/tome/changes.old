@@ -1,0 +1,23 @@
+[D]- Player tunneling has been turned into a Lua subsystem.  As an
+     example of the subsystem's flexibility, picks and shovels can
+     no longer be used to "tunnel" through webs.  Instead, lit
+     torches can be used to burn down webs, and bladed weapons can
+     be used to cut through them, with fire or acid brands greatly
+     increasing the web destroying power of the weapon.
+[T]- Nicely done Rivendell thanks to Lord Dimwitt
+
+[V]- T.o.M.E 3.0.0alpha14 aka "Dragonland's River"
+
+[P]- Warriors start with a wooden shield now, except for pikemen obviously
+[I]- Requires confirmation to not spend points at birth
+[I]- ToME autowields items before asking for stats, so that one can see the effect of stats
+     on blows and such
+
+[V]- T.o.M.E 3.0.0alpha16 aka "Old Age of Wonders"
+
+[Q]- New quest: Farlina Heirloom (quest to kill the Barrows King)
+[P]- Fix dwarf descriptions
+[G]- Stone Skin spell now increases melee resistance and absorb levels
+[O]- Corpse are not edible
+
+[V]- T-Engine 3.0.0alpha18 aka "The Immortal Fire"

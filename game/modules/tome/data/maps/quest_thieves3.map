@@ -1,0 +1,48 @@
+map.define("quest_thieves3.map")
+
+-- Dark floor
+map.symbol{ symbol='.' feat=FEAT_FLOOR info=0 }
+
+-- Permanent wall
+map.symbol{ symbol='X' feat=FEAT_PERM_INNER info=0 }
+
+-- Looked door
+map.symbol{ symbol='D' feat=FEAT_DOOR_LOCKED_HEAD+6 info=0 }
+
+-- down staircase
+map.symbol{ symbol='<' feat=FEAT_SHAFT_UP  info=0 trap=map.ANY
+         monster=RACE_WORMTONGUE
+         name="shaft leading to the first floor"
+         on_walk="There is a shaft leading to the first floor."
+}
+
+-- Floor with Novice rogue
+map.symbol{ symbol='a' feat=FEAT_FLOOR info=0 monster=RACE_THIEVES_GUILD_ROGUE }
+
+-- Floor with Bandit
+map.symbol{ symbol='b' feat=FEAT_FLOOR info=0 monster=RACE_THIEVES_GUILD_BANDIT }
+
+-- Floor with novice warrior
+map.symbol{ symbol='c' feat=FEAT_FLOOR info=0 monster=RACE_THIEVES_GUILD_GUARD }
+
+-- Floor with novice mage
+map.symbol{ symbol='e' feat=FEAT_FLOOR info=0 monster=RACE_THIEVES_GUILD_CONJURER }
+
+-- Dungeon layout
+map.map
+{
+[[XXXXXXXXXXXXXXXX]],
+[[X..............X]],
+[[X..XXX..XXXX...X]],
+[[X..XaX..X<.X...X]],
+[[X..XDX..XXDX...X]],
+[[Xe.............X]],
+[[X...XXXX..XXXX.X]],
+[[X.b.XecD..XebX.X]],
+[[XDX.XXXX..XXDX.X]],
+[[X.X............X]],
+[[XXXXXXXXXXXXXXXX]],
+}
+
+-- Starting position
+map.set_player(9, 1)

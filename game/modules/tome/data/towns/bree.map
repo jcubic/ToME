@@ -1,0 +1,111 @@
+map.define("bree.map")
+
+-- Import default symbols
+map.import("towns/symbols.map")
+
+-- Barrow-Downs entrance
+map.symbol{ symbol='{' feat=FEAT_MORE info=3 dungeon=DUNGEON_BARROW_DOWNS }
+
+-- Thieves lair(and player house) entrance
+map.quest_symbol
+{
+	quest = QUEST_THIEVES
+	symbol = '>'
+	symbols =
+	{
+		[{QUEST_STATUS_TAKEN,QUEST_STATUS_COMPLETED,QUEST_STATUS_FINISHED}] = { feat=FEAT_MORE info=3 dungeon=DUNGEON_THIEVES_LAIR }
+		default = { feat=FEAT_PERM_SOLID info=3 }
+	}
+}
+
+-- Interresting spots for townspeople
+map.symbol{ symbol='&' feat=FEAT_FLOOR info=3 flags={ TOWN_HOT_SPOT=true } }
+
+-- Mayor's house
+map.symbol{ symbol='b' feat=FEAT_SHOP info=3 building=store.BREE_MAYOR owner="BREE_MAYOR" }
+
+-- The Prancing Pony
+map.symbol{ symbol='a' feat=FEAT_SHOP info=3 building=store.INN_PRANCING_PONY }
+
+-- Soothsayer
+map.symbol{ symbol='c' feat=FEAT_SHOP info=3 building=store.SOOTHSAYER }
+
+-- The Mathom-house
+map.symbol{ symbol='e' feat=FEAT_SHOP info=3 building=store.MUSEUM_MATHOM }
+
+-- Marlina Snowfoot
+map.symbol{ symbol='F' feat=FEAT_GRASS info=3 monster=RACE_FARLINA_SNOWFOOT }
+
+---------------- Town Layout ----------------
+map.map
+{
+[[                                                                                                                  VV              --                                                                  ]],
+[[                                                                                                                   VV              --                                                                 ]],
+[[                                                                                                                     V              --                                                                ]],
+[[                                                                                                                      VV            --                                                                ]],
+[[                                                                                                                        VVV          --                                                               ]],
+[[                                                                                                                           VV        --                                                               ]],
+[[OOOOO                                                                                                                       V         --                                                              ]],
+[[    OOOO                                                                                                                     V        --                                                              ]],
+[[----   OOOOO                                                                                                                  VVV      ---                             VV                             ]],
+[[-------    OOOOOO                                                                                                                V      --                            VVVV                            ]],
+[[-----------     OO                                                                                                               V      --                           VVWWVVV                          ]],
+[[---------------  OO                                                                                                               VVV    --                        VVVWWWWWVVV                        ]],
+[[----------------  OOO                                                                                                               VVV   --                      VVWWWWWWWWWVV                       ]],
+[[------------------  OO                                                                                                                VVVVVVV                    VVWWWWWWWWWWWV                       ]],
+[[-------------------- OOOOO                                                                                                                 --VVVV   VVVVV        VVWWWWWWWWWWWVV                      ]],
+[[###------------------    OO                                                            ,,,,,,,,,,,,,,,,,,                                   --  VVVVV   VV    VVVVVVVWWWWWWWVVV                       ]],
+[[CCC####------------------ OOO                                                     ,,,,,CCCCCCCCCCCCCCCCCC,,,,,,,,,                           --          VVVVVV     VVVVWWVVV                         ]],
+[[TTTCCCC###---------------,, OO                                                 ,,,CCCCCCTTTTTTTTTTTTTTTTCCCCCCCCCC,,,,                        --                       VVVV                           ]],
+[[---TTTTCCC###---------,,,--  OO                                              ,,CCCCTTTTTT--------------TTTTTTTTTTCCCCC,,,,,                  ^--                                                      ]],
+[[-------TTTCCC##-----,,------  O                                            ,,CCCTTTT&.................----------TTTTTCCCCCC,,              ^^^ --                                                     ]],
+[[----------TTTCC##,,,--------  OO                                          ,CCCTTT....--ssssssss-..---..........-----TTTTTTCCC,,,          ^^    --                                                    ]],
+[[-------------TC,,###-    ---   OO                                        ,CCTTT...-----SSSSSSSS--.----------,,....&------TTTCCCC,,       ^^     --                                                    ]],
+[[--------------,TTCCC###    --   OOO                                    ,,CCTT...-,,,,--ssssssss-..-sssssssssss,---......---TTTTCCT,,    ^^       --                                                   ]],
+[[----------  ,,,--TTTCCC    --     OO                                 ,,CCCTT..-------,,##9#####-.--sssssssssss-,-------...----TTCCTT,  ^^^        --                                                  ]],
+[[---------  ,, ,,----TTTCC          O                                ,CCC  T..--sssSsss,,,,------.--StSStSSSStS--,------.-....--TTCCTT,^^^          --                                                 ]],
+[[-------   ,,   ,                   OO                              ,CCTTT...---ssstSSS---,,,----.--sssssssssss---,---...----..--TTCCT^^^^ ^^        --                                                ]],
+[[-------- ,,   ,,                    OO                            ,CCTT...-----sssssss--,,-,,---.--sssssssssss---,-...-------..--TTC^^^   ^         ----                                              ]],
+[[--------     {,                      OO                           ,CTT..---,,,,###6###,,,---,,--.--###########----.&----------..--T^^^^   ^       ---  --                                             ]],
+[[----------                            OOO                         ,CT..,,,,----,,,,,,,,------,,-.--###b###e###-....,---sssss---.--T^^   ^         --    --                                            ]],
+[[-----------                             OO                       ,CCT.,sssssss----,-----------,,.-----.-----....-,--,,-StSSS---&-T^^^   ^        --      -----                                        ]],
+[[--------------                           OO                     ,CCTT.-StStSSS---,-----ssssss--..-----.--....--,,,,,,-,sssss---.-T^^^      ^      --         --             ,,&                       ]],
+[[------------                              OOOOO                 ,CTT-.-sssssss---,-----SSSSSS--.------.-..--,,,-ssss--,#####---.-T^^    ^         --          -----        ,,                         ]],
+[[---------                                     OO               ,CCT-.&-##5####----,----ssssss-..&.......--XXXX,-ssss--,------...-^^^  ^ ^^  ^    ---             ----    ,,,                          ]],
+[[-- ----                                        OOOOOOOO        ,C  OOOO--OOOOO----,----#c##4#-.---.,----,-UUUU,-SSSS--,-----..---^^   ^   ^     ---                 -----,             OOOOOOOOOOOOOOO]],
+[[--  ----                                              OOOOOOO  ,CT-OssOOOO---OOOOOOOOO--OOOO--.-T-.-sss--,XXXX,-ssss---,---..--T^^              --                      --           OOO              ]],
+[[--  -----                                                   OOOOOOOOSt.---------XXXX-OOOO--OOOO---.-StS--,#0##,-ssss---,---.---^^     ^  ^      --                       ---      OOOO                ]],
+[[ -     ---   -----                                           ,,CT--.ss.-sssss---XXXX,---------OOOO.-sss---,,,,,-####--,---..-T^^   ^ ^          --                         ---   OO                   ]],
+[[     ----     ----                                           ,,CT--.##.-SStSS---####,------------OO-#>#-ssssss-,,,---,----.--T^^   ^           -,-                           OOOOO                    ]],
+[[   -------      ----                                         ,,CTT-....-sssss--,,,,,,----------F--OO-,--SSSSSt-ss-,-,---...-T^^  ^ ^           -,                         OOOO                        ]],
+[[     -------   ------                                        ,,CCTT---..#2###-,sssss,-SSSSSSSS-----OO,--ssssss-tS--,.&...---^^ ^^     ^^^     -,                   OOOOOOOO                           ]],
+[[    -----        -----                                        ,,CCT----..,,,,,-StSSS,-ssssssss------OOO-#1##a#-ss....-----T^^        ^^      -,-               OOOOO                                  ]],
+[[       ----  --------                                         ,,CCTT----.&----,sssss,-##7#####--------OO,.,,.,-##.----TTTT^^     ^  ^^       -,            OOOOO                                      ]],
+[[      ---------------                                         ,,,CCTTTT--..---,##3##-,--,&,---------..&OOOOOOOOOOOTTTTTCC^^^   ^^  ^^        ,-          OOO                                          ]],
+[[         --------                                              ,,,CCCC  --..........,-,,---,--.......-------TTTTTOCCCCC,,^^^^^^^^^^^        -.-      OOOOO                                            ]],
+[[       ----------                                              ,, ,,CCCTT----------.....-......-------TTTTTTTCCCCO,,,,,     ^^^^^^^         -.-      O                                                ]],
+[[         -------                                               ,,   ,,CCTTTTTTTTTT-----...------TTTTTTTCCCCCC,,,,OOO                       -.-    OOOO                                                ]],
+[[           ----                                                ,,,    ,CCCCCCCCCCTTTTT-----TTTTTTCCCCCC,,,,,,      OOO                    OOOOOOOOO                                                   ]],
+[[       ^^   ----                                                ,,     ,,,,,,,,,,CCCCCTTTTTTCCCCC,,,,,,              OO                 OOO--                                                         ]],
+[[     ^^^^^                                                      ,,,              ,,,,,CCCCCC,,,,,                     OOOO             OOO--                                                          ]],
+[[   ^^^^^^^^^                                                     ,,                   ,,,,,,                             OOOOOOO     OOO---                                                           ]],
+[[   ^^^^^^^^^                                                     ,,                                                            OOOOOOO----                                                            ]],
+[[  ^^^^^^^^^^^^^^^                                                ,,,                                                            ..------                                                              ]],
+[[    ^^^^^^^^^^^^^^                                                ,,,                     ......                             ....-----                                                                ]],
+[[    ^^^^^^^^^^^^^^^                                                ,,,          ...........    ............       ............-------,,,,                                                             ]],
+[[ ^^^^^^^^^^^^^^^^^                                                  ,,        ...                         .........--------------       ,,,,,,,    ,,,,,,,,,                                          ]],
+[[     ^^^^^^^^^^^^^                                                 ,,         .                                                               ,,,,,,       ,,,,,,,,,                                  ]],
+[[   ^^^^^^^^^^^^^^                                                   ,,      ...                                                                                    ,,,,,        ------    ---         ]],
+[[     ^^^^^^^^^^^^^^^                                                 ,,     .                                                                                          ,,,,,,,,-------   -----        ]],
+[[     ^^^^^^^^^^^^^^                                                   ,    ..                                                                                                  ----------------       ]],
+[[  ^^^^^^^^^^^^^^^^                                                    ,,  ..                                                                                                ------------------        ]],
+[[    ^^^^^^^^^^^^^^^                                                    , ..                                                                                                 ----------------&         ]],
+[[  ^^^^^^^^^^^^^^^^                                                     ,,.                                                                                                  ---    ----   ----        ]],
+[[   ^^^^^^^^^^^^^                                                        ,.                                                                                                   -      --     --         ]],
+[[   ^^^^^^^^^^^^^^                                                        .                                                                                                                            ]],
+[[     ^^^^^^^^^^^^^^                                                      .                                                                                                                            ]],
+[[                                                                                                                                                                                                      ]],
+}
+
+---------------- Starting position ----------------
+if leaving_quest == 0 then map.set_player(33, 131) end

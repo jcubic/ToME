@@ -1,0 +1,1263 @@
+/* File: dungeon.pkg */
+
+/*
+ * Purpose: Lua interface defitions for dungeon routines.
+ * To be processed by tolua to generate C source code.
+ */
+
+$#include "angband.h"
+
+/** @typedef cptr
+ * @note String
+ */
+typedef char* cptr;
+
+/** @typedef errr
+ * @note Number
+ */
+typedef s32b errr;
+
+/** @typedef byte
+ * @note Number
+ */
+typedef unsigned char byte;
+
+/** @typedef s16b
+ * @note Number
+ */
+typedef signed short s16b;
+
+/** @typedef u16b
+ * @note Number
+ */
+typedef unsigned short u16b;
+
+/** @typedef s32b
+ * @note Number
+ */
+typedef signed long s32b;
+/** @typedef u32b
+ * @note Number
+ */
+typedef unsigned long u32b;
+
+/** @var SCREEN_HGT
+ * @brief Number
+ * @note Size of a game screen(without bigscreen mode, that is how big is the map
+ * displayed on a 80x24 screen)
+ */
+extern s16b SCREEN_HGT;
+
+/** @var SCREEN_WID
+ * @brief Number
+ * @note Size of a game screen(without bigscreen mode, that is how big is the map
+ * displayed on a 80x24 screen)
+ */
+extern s16b SCREEN_WID;
+
+
+/** @name Cave Grid
+ * @note Special cave grid flags
+ * @{
+ */
+
+/** @def CAVE_MARK
+ * @note memorized feature
+ */
+#define CAVE_MARK       0x0001
+
+/** @def CAVE_GLOW
+ * @note self-illuminating
+ */
+#define CAVE_GLOW       0x0002
+
+/** @def CAVE_ICKY
+ * @note part of a vault
+ */
+#define CAVE_ICKY       0x0004
+
+/** @def CAVE_ROOM
+ * @note part of a room
+ */
+#define CAVE_ROOM       0x0008
+
+/** @def CAVE_SEEN
+ * @note seen flag
+ */
+#define CAVE_SEEN       0x0010
+
+/** @def CAVE_VIEW
+ * @note view flag
+ */
+#define CAVE_VIEW       0x0020
+
+/** @def CAVE_TEMP
+ * @note temp flag
+ */
+#define CAVE_TEMP       0x0040
+
+/** @def CAVE_WALL
+ * @note wall flag
+ */
+#define CAVE_WALL       0x0080
+
+/** @def CAVE_TRDT
+ * @note trap detected
+ */
+#define CAVE_TRDT       0x0100
+
+/** @def CAVE_IDNT
+ * @note grid identified (fountains)
+ */
+#define CAVE_IDNT       0x0200
+
+/** @def CAVE_SPEC
+ * @note special mark(quests)
+ */
+#define CAVE_SPEC       0x0400
+
+/** @def CAVE_FREE
+ * @note no random generation on it
+ */
+#define CAVE_FREE       0x0800
+
+/** @def CAVE_DETECT
+ * @note Traps detected here
+ */
+#define CAVE_DETECT     0x1000
+
+/** @def CAVE_PLIT
+ * @note Player lit grid
+ */
+#define CAVE_PLIT       0x2000
+
+/** @def CAVE_MLIT
+ * @note Monster lit grid
+ */
+#define CAVE_MLIT       0x4000
+/** @} */
+
+/** @name Terrain Feature Indexes
+ * @note (see "lib/edit/f_info.txt")
+ * @{ */
+/* Needed */
+extern s16b FEAT_WAY_LESS;
+extern s16b FEAT_WAY_MORE;
+extern s16b FEAT_SHAFT_DOWN;
+extern s16b FEAT_SHAFT_UP;
+extern s16b FEAT_LESS;
+extern s16b FEAT_MORE;
+extern s16b FEAT_DOOR;			/* (and coresponding open door) */
+extern s16b FEAT_OPEN;
+extern s16b FEAT_WALL_INNER;
+extern s16b FEAT_WALL_OUTER;
+extern s16b FEAT_WALL_EXTRA;
+extern s16b FEAT_WALL_SOLID;
+extern s16b FEAT_PERM_INNER;
+extern s16b FEAT_PERM_OUTER;
+extern s16b FEAT_PERM_SOLID;
+extern s16b FEAT_WORLD_BORDER;
+
+/* Optional */
+extern s16b FEAT_RUBBLE;
+extern s16b FEAT_SECRET;
+extern s16b FEAT_BROKEN;
+extern s16b FEAT_DOOR_LOCKED_HEAD;
+extern s16b FEAT_DOOR_LOCKED_TAIL;
+extern s16b FEAT_DOOR_JAMMED_HEAD;
+extern s16b FEAT_DOOR_JAMMED_TAIL;
+extern s16b FEAT_SHOP;
+/** @} */
+
+/** @var level_flags
+ * @brief Flags
+ */
+extern flags_holder_type *dungeon_flags@level_flags;
+
+/** @def MAX_HGT
+ * @note Maximum dungeon height in grids, must be a multiple of SCREEN_HGT,
+ * probably hard-coded to SCREEN_HGT * 3.
+ */
+#define MAX_HGT         66
+
+
+/** @def MAX_WID
+ * @note Maximum dungeon width in grids, must be a multiple of SCREEN_WID,
+ * probably hard-coded to SCREEN_WID * 3.
+ */
+#define MAX_WID         198
+
+
+/** @name Town Defines
+ * @{ */
+
+/**@def TOWN_REAL
+ * @note Flag indicating town is really present.
+ */
+#define TOWN_REAL @ TOWN_REAL
+
+/**@def TOWN_KNOWN
+ * @note Flag indicating town has been found by the player.
+ */
+#define TOWN_KNOWN @ TOWN_KNOWN
+
+/** @def TOWN_RANDOM
+ * @note First random town
+ */
+#define TOWN_RANDOM @ TOWN_RANDOM
+
+/** @def TOWN_DUNGEON
+ * @note Maximun number of towns per dungeon
+ */
+#define TOWN_DUNGEON @ TOWN_DUNGEON
+
+/** @def TOWN_CHANCE
+ * @note Chance of 1 town
+ */
+#define TOWN_CHANCE @ TOWN_CHANCE
+
+/** @} */
+
+/** @name Wilderness Terrains
+ * @{
+ */
+
+/** @def TERRAIN_EDGE
+ * @note Edge of the World
+ */
+#define TERRAIN_EDGE             0
+
+/** @def TERRAIN_TOWN
+ * @note Town
+ */
+#define TERRAIN_TOWN             1
+
+/** @def TERRAIN_DEEP_WATER
+ * @note Deep water
+ */
+#define TERRAIN_DEEP_WATER       2
+
+/** @def TERRAIN_SHALLOW_WATER
+ * @note Shallow water
+ */
+#define TERRAIN_SHALLOW_WATER    3
+
+/** @def TERRAIN_SWAMP
+ * @note Swamp
+ */
+#define TERRAIN_SWAMP            4
+
+/** @def TERRAIN_DIRT
+ * @note Dirt
+ */
+#define TERRAIN_DIRT             5
+
+/** @def TERRAIN_GRASS
+ * @note Grass
+ */
+#define TERRAIN_GRASS            6
+
+/** @def TERRAIN_TREES
+ * @note Trees
+ */
+#define TERRAIN_TREES            7
+
+/** @def TERRAIN_DESERT
+ * @note Desert
+ */
+#define TERRAIN_DESERT           8
+
+/** @def TERRAIN_SHALLOW_LAVA
+ * @note Shallow lava
+ */
+#define TERRAIN_SHALLOW_LAVA     9
+
+/** @def TERRAIN_DEEP_LAVA
+ * @note Deep lava
+ */
+#define TERRAIN_DEEP_LAVA       10
+
+/** @def TERRAIN_MOUNTAIN
+ * @note Mountain
+ */
+#define TERRAIN_MOUNTAIN        11
+
+/** @def MAX_WILD_TERRAIN */
+#define MAX_WILD_TERRAIN        18
+/** @} */
+
+/*
+ * Types of places in which to find "naked" cave grids.
+ */
+#define ALLOC_SET_CORR /* Hallway */
+#define ALLOC_SET_ROOM /* Room */
+#define ALLOC_SET_BOTH /* Anywhere */
+
+/** @struct border_type
+ * @brief Border
+ * @{ */
+struct border_type
+{
+	/** @var north[MAX_WID]
+	 * @brief Number
+	 */
+	byte 	north[MAX_WID];
+
+	/** @var south[MAX_WID]
+	 * @brief Number
+	 */
+	byte 	south[MAX_WID];
+
+    /** @var east[MAX_HGT]
+	 * @brief Number
+	 */
+    byte 	east[MAX_HGT];
+
+    /** @var west[MAX_HGT]
+	 * @brief Number
+	 */
+	byte 	west[MAX_HGT];
+
+    /** @var north_west
+	 * @brief Number
+	 */
+	byte	north_west;
+
+    /** @var north_east
+	 * @brief Number
+	 */
+	byte	north_east;
+
+    /** @var south_west
+	 * @brief Number
+	 */
+	byte	south_west;
+
+    /** @var south_east
+	 * @brief Number
+	 */
+	byte	south_east;
+};
+/** @} */
+
+
+/** @struct wilderness_type_info
+ * @note A structure describing a wilderness area
+ * with a terrain, a town or a dungeon entrance
+ * @{ */
+struct wilderness_type_info
+{
+	/** @var name
+	 * @brief Number
+	 * @note Name (offset)
+	 */
+	cptr    name;
+
+	/** @var text
+	 * @brief Number
+	 * @note Text (offset)
+	 */
+	cptr    text;
+
+	/** @var entrance
+	 * @brief Number
+	 * @note Which town is there(<1000 i's a town, >=1000 it a dungeon)
+	 */
+	u16b    entrance;
+
+	/** @var road
+	 * @brief Number
+	 * @note Flags of road
+	 */
+	byte    road;
+
+	/** @var level
+	 * @brief Number
+	 * @note Difficulty level
+	 */
+	s16b    level;
+
+	/** @var flags
+	 * @brief Flags
+	 * @note Some flags
+	 */
+	flags_type    flags;
+
+	/** @var feat
+	 * @brief Number
+	 * @note The feature of f_info.txt that is used to allow passing, ... and to get a char/color/graph
+	 */
+	byte    feat;
+
+	/** @var d_char
+	 * @brief Number
+	 * @note The char representing it on the wilderness map
+	 */
+	byte    d_char;
+
+	/** @var terrain_idx
+	 * @brief Number
+	 * @note Terrain index(defined in defines.h)
+	 */
+	byte    terrain_idx;
+
+	/** @var terrain[MAX_WILD_TERRAIN]
+	 * @brief Number
+	 * @note Feature types for the plasma generator
+	 */
+	byte    terrain[MAX_WILD_TERRAIN];
+};
+/** @} */
+
+/** @struct wilderness_map
+ * @note A structure describing a wilderness map
+ * @{ */
+struct wilderness_map
+{
+	/** @var feat
+	 * @brief Number
+	 * @note Wilderness feature
+	 */
+	s32b     feat;
+
+	/** @var mimic
+	 * @brief Number
+	 * @note Wilderness feature mimic
+	 */
+	s16b     mimic;
+
+	/** @var seed
+	 * @brief Number
+	 * @note Seed for the RNG
+	 */
+	u32b    seed;
+
+	/** @var entrance
+	 * @brief Number
+	 * @note Entrance for dungeons
+	 */
+	u16b    entrance;
+
+	/** @var known
+	 * @brief Boolean
+	 * @note Is it seen by the player ?
+	 */
+	bool    known;
+
+	/** @var flags
+	 * @brief flags_type
+	 * @note Persistant grid flags
+	 */
+	flags_type flags;
+};
+/** @} */
+
+/** @var max_st_idx
+ * @brief Number
+ */
+extern u16b max_st_idx;
+
+/** @struct town_type
+ * @note A structure describing a town with
+ * stores and buildings
+ * @{ */
+struct town_type
+{
+	/** @var name
+	 * @brief String
+	 */
+	cptr name;
+
+	/** @var seed
+	 * @brief Number
+	 * @note Seed for RNG
+	 */
+	u32b seed;
+
+	/** @var *store
+	 * @brief flags_type
+	 * @note The store
+	 */
+	flags_type stores;
+
+	/** @var numstores
+	 * @brief Number
+	 */
+	byte numstores;
+
+	/** @var flags
+	 * @brief Number
+	 * @note Town flags
+	 */
+	byte flags;
+
+	/** @var stocked
+	 * @brief Boolean
+	 * @note Is the town actually stocked ?
+	 * Left this for the sake of compatibility
+	 */
+	bool stocked;
+
+	/** @var destroyed
+	 * @brief Boolean
+	 * @note Is the town destroyed?
+	 */
+	bool destroyed;
+};
+/** @} */
+
+/** @var max_towns
+ * @brief Number
+ */
+extern u16b max_towns;
+
+/** @var max_real_towns
+ * @brief Number
+ */
+extern u16b max_real_towns;
+
+/** @var town_info[max_towns]
+ * @brief town_type
+ */
+extern town_type town_info[max_towns];
+
+/** @struct rule_type
+ * @brief Define monster generation rules
+ * @{ */
+struct rule_type
+{
+	/** @var mode
+	 * @brief Number
+	 * @note Mode of combination of the monster flags
+	 */
+	byte mode;
+
+	/** @var percent
+	 * @brief Number
+	 * @note Percent of monsters affected by the rule
+	 */
+	byte percent;
+
+	/** @var mflags
+	 * @brief Flags
+	 * @note The monster flags that are allowed
+	 */
+	flags_type flags;
+
+	/** @var r_char[5]
+	 * @brief String
+	 * @note Monster race allowed
+	 */
+	char r_char[5];
+};
+/** @} */
+
+/** @struct dungeon_info_type
+ * @brief A structure for the != dungeon types
+ * @{ */
+struct dungeon_info_type
+{
+	/** @var name
+	 * @brief String
+	 * @note Name
+	 */
+	cptr name;
+
+	/** @var text
+	 * @brief String
+	 * @note Description
+	 */
+	cptr text;
+
+	/** @var short_name[3]
+	 * @brief String
+	 * @note Short name
+	 */
+	char short_name[3];
+
+	/** @var floor1
+	 * @brief Number
+	 * @note Floor tile 1
+	 */
+	s16b floor1;
+
+	/** @var floor_percent1[2]
+	 * @brief Number
+	 * @note Chance of type 1
+	 */
+	byte floor_percent1[2];
+
+	/** @var floor2
+	 * @brief Number
+	 * @note Floor tile 2
+	 */
+	s16b floor2;
+
+	/** @var floor_percent2[2]
+	 * @brief Number
+	 * @note Chance of type 2
+	 */
+	byte floor_percent2[2];
+
+	/** @var floor3
+	 * @brief Number
+	 * @note Floor tile 3
+	 */
+	s16b floor3;
+
+	/** @var floor_percent3[2]
+	 * @brief Number
+	 * @note Chance of type 3
+	 */
+	byte floor_percent3[2];
+
+	/** @var outer_wall
+	 * @brief Number
+	 * @note Outer wall tile
+	 */
+	s16b outer_wall;
+
+	/** @var inner_wall
+	 * @brief Number
+	 * @note Inner wall tile
+	 */
+	s16b inner_wall;
+
+	/** @var fill_type1
+	 * @brief Number
+	 * @note Cave tile 1
+	 */
+	s16b fill_type1;
+
+	/** @var fill_percent1[2]
+	 * @brief Number
+	 * @note Chance of type 1
+	 */
+	byte fill_percent1[2];
+
+	/** @var fill_type2
+	 * @brief Number
+	 * @note Cave tile 2
+	 */
+	s16b fill_type2;
+
+	/** @var fill_percent2[2]
+	 * @brief Number
+	 * @note Chance of type 2
+	 */
+	byte fill_percent2[2];
+
+	/** @var fill_type3
+	 * @brief Number
+	 * @note Cave tile 3
+	 */
+	s16b fill_type3;
+
+	/** @var fill_percent3[2]
+	 * @brief Number
+	 * @note Chance of type 3
+	 */
+	byte fill_percent3[2];
+
+	/** @var fill_method
+	 * @brief Number
+	 * @note Smoothing parameter for the above
+	 */
+	byte fill_method;
+
+	/** @var mindepth
+	 * @brief Number
+	 * @note Minimal depth
+	 */
+	s16b mindepth;
+
+	/** @var maxdepth
+	 * @brief Number
+	 * @note Maximal depth
+	 */
+	s16b maxdepth;
+
+	/** @var next
+	 * @brief Number
+	 * @note The next part of the main dungeon
+	 */
+	byte next;
+
+	/** @var min_plev
+	 * @brief Number
+	 * @note Minimal plev needed to enter -- it's an anti-cheating mesure
+	 */
+	byte min_plev;
+
+	/** @var min_m_alloc_level
+	 * @brief Number
+	 * @note Minimal number of monsters per level
+	 */
+	s16b min_m_alloc_level;
+
+	/** @var max_m_alloc_chance
+	 * @brief Number
+	 * @note There is a 1/max_m_alloc_chance chance per round of creating a new monster
+	 */
+	s16b max_m_alloc_chance;
+
+	/** @var flags1
+	 * @brief Flags
+	 * @note Flags
+	 */
+	flags_type flags;
+
+	/** @var size_x
+	 * @brief Number
+	 */
+	s16b size_x;
+
+	/** @var size_y
+	 * @brief Number
+	 * @note Desired numers of panels
+	 */
+	s16b size_y;
+
+	/** @var rule_percents[100]
+	 * @brief Number
+	 * @note Flat rule percents
+	 */
+	byte rule_percents[100];
+
+	/** @var rules[5]
+	 * @brief rule_type
+	 * @note Monster generation rules
+	 */
+	rule_type rules[5];
+
+
+	/** @var ix
+	 * @brief Number
+	 */
+	s16b ix;
+
+	/** @var iy
+	 * @brief Number
+	 */
+	s16b iy;
+
+	/** @var ox
+	 * @brief Number
+	 */
+	s16b ox;
+
+	/** @var oy
+	 * @brief Number
+	 * @note Wilderness coordinates of the entrance/output of the dungeon
+	 */
+	s16b oy;
+
+	/** @var d_dice[4]
+	 * @brief Number
+	 * @note Number of dices
+	 */
+	s16b d_dice[4];
+
+	/** @var d_side[4]
+	 * @brief Number
+	 * @note Number of sides
+	 */
+	s16b d_side[4];
+
+	/** @var d_frequency[4]
+	 * @brief Number
+	 * @note Frequency of damage (1 is the minimum)
+	 */
+	s16b d_frequency[4];
+
+	/** @var d_type[4]
+	 * @brief Number
+	 * @note Type of damage
+	 */
+	s16b d_type[4];
+
+	/** @var t_idx[TOWN_DUNGEON]
+	 * @brief Number
+	 * @note The towns
+	 */
+	s16b t_idx[TOWN_DUNGEON];
+
+	/** @var t_level[TOWN_DUNGEON]
+	 * @brief Number
+	 * @note The towns levels
+	 */
+	s16b t_level[TOWN_DUNGEON];
+
+	/** @var t_num
+	 * @brief Number
+	 * @note Number of towns
+	 */
+	s16b t_num;
+};
+/** @} */
+
+/** @var max_d_idx
+ * @brief Number
+ */
+extern u16b max_d_idx;
+
+/** @var d_info[max_d_idx]
+ * @brief dungeon_info_type
+ */
+extern dungeon_info_type d_info[max_d_idx];
+
+/** @var max_wild_x
+ * @brief Number
+ */
+extern u16b max_wild_x;
+
+/** @var max_wild_y
+ * @brief Number
+ */
+extern u16b max_wild_y;
+
+/** @var max_wf_idx
+ * @brief Number
+ */
+extern u16b max_wf_idx;
+
+/** @var wf_info[max_wf_idx]
+ * @brief wilderness_type_info
+ */
+extern wilderness_type_info wf_info[max_wf_idx];
+
+/** @var current_dungeon_idx
+ * @brief Number
+ */
+extern byte dungeon_type@current_dungeon_idx;
+
+/*
+ * tolua doesnt like wierd arraysn, I'll use accessing functions
+ * extern wilderness_map wild_map[max_wild_y][max_wild_x];
+ */
+$static wilderness_map* lua_get_wild_map(s32b y, s32b x) { return &wild_map[y][x]; }
+
+/** @fn wild_map(s32b y, s32b x)
+ * @brief Return a map of the wilderness at coordinate (y,x)
+ * @param y Number \n y coordinate of wilderness map
+ * @brief Y-coordinate
+ * @param x Number \n x coordinate of wilderness map
+ * @brief X-coordinate
+ * @return wilderness_map \n map of wilderness at coordinate (y,x)
+ * @note (see file w_dun.c)
+ */
+wilderness_map* lua_get_wild_map@wild_map(s32b y, s32b x);
+
+/** @fn place_floor(s32b y, s32b x)
+ * @brief Place floor terrain at (y, x)
+ * @param y Number \n y coordinate of dungeon
+ * @brief Y-coordinate
+ * @param x Number \n x coordinate of dungeon
+ * @brief X-coordinate
+ * @return void
+ * @note
+ * Place floor terrain at (y, x) according to dungeon info.
+ * @note (see file cave.c)
+ */
+extern void place_floor(s32b y, s32b x);
+
+/** @fn place_filler(s32b y, s32b x)
+ * @brief Place a cave filler at (y, x)
+ * @param y Number \n y coordinate of dungeon
+ * @brief Y-coordinate
+ * @param x Number \n x coordinate of dungeon
+ * @brief X-coordinate
+ * @return void
+ * @note (see file generate.c)
+ */
+extern void place_filler(s32b y, s32b x);
+
+/** @fn add_scripted_generator(cptr name, bool stairs, bool monsters, bool objects, bool miscs)
+ * @dgonly
+ * @param name String \n Name of generator
+ * @param stairs Boolean \n TRUE if stairs can be generated, otherwise FALSE
+ * @param monsters Boolean \n TRUE if monsters can be generated, otherwise FALSE
+ * @param objects Boolean \n TRUE if objects can be generated, otherwise FALSE
+ * @param miscs Boolean \n TRUE if other stuff can be generated, otherwise FALSE
+ * @return void
+ * @note (defined in file lua_bind.c)
+ */
+extern void add_scripted_generator(cptr name, bool stairs, bool monsters, bool objects, bool miscs);
+
+/** @fn new_player_spot(s32b branch)
+ * @brief Places player in a new location
+ * @param branch Number \n branch is the dungeon branch (if any).
+ * @brief Dungeon branch
+ * @return Boolean \n TRUE if player was placed successfully, otherwise FALSE.
+ * The global values py and px are updated.
+ * @note
+ * Up to 5000 attempts are made to place the player in the dungeon. The grid
+ * must be a naked floor and not an anti-teleport grid. In some circumstances
+ * stairs or ways in/out may be created under the player.
+ * @note (see file generate.c)
+ */
+extern bool new_player_spot(s32b branch);
+
+/** @fn get_level_desc(char *buf)
+ * @brief Return the special level desc
+ * @param *buf String
+ * @brief Description
+ * @return *buf String \n The level description
+ * @return Boolean \n TRUE if a level description was returned, otherwise FALSE
+ * @note
+ * This is the 'D' line in the dngn files.
+ * @note (see file levels.c)
+ */
+extern bool get_level_desc(char *buf);
+
+/** @fn get_level_flags()
+ * @brief These are the 'F' lines in the dngn files.
+ * @return void
+ * @note (see file levels.c)
+ */
+extern void get_level_flags();
+
+/** @fn get_dungeon_name()
+ * @brief Return the special level name
+ * @return *buf String \n The level name or empty string is no name
+ * @note
+ * This is the 'N' line in the dngn files.
+ * @note (see file levels.c)
+ */
+$static char *lua_get_dungeon_name() { static char buf[20]; return (get_dungeon_name(buf) == TRUE) ? buf : ""; }
+static char *lua_get_dungeon_name@get_dungeon_name();
+
+/** @fn get_dungeon_special(char *buf)
+ * @brief Return the map filename
+ * @param *buf String
+ * @brief Map filename
+ * @return Boolean \n TRUE if a map filename was returned, otherwise FALSE
+ * @return *buf String \n The map filename
+ * @note
+ * This is the 'S' line in the dngn files.
+ * @note (see file levels.c)
+ */
+extern bool get_dungeon_special(char *buf);
+
+/** @fn get_branch()
+ * @brief return the dungeon branch starting form the current dungeon/level.
+ * @return Number \n The branch
+ * @note
+ * This is the 'B' line in the dngn files.
+ * @note (see file levels.c)
+ */
+extern s32b get_branch();
+
+/** @fn get_fbranch()
+ * @brief Return the father dungeon branch.
+ * @return Number \n The father branch
+ * @note
+ * This is the 'A' line in the dngn files.
+ * @note (see file levels.c)
+ */
+extern s32b get_fbranch();
+
+/** @fn get_flevel()
+ * @brief Return the father dungeon level.
+ * @return Number \n The father level
+ * @note
+ * This is the 'L' line in the dngn files.
+ * @note (see file levels.c)
+ */
+extern s32b get_flevel();
+
+/** @fn prt_map()
+ * @brief Prints the map of the dungeon
+ * @dgonly
+ * @return void
+ * @note  Prints the map of the dungeon
+ *
+ * Note that, for efficiency, we contain an "optimized" version
+ * of both "lite_spot()" and "print_rel()", and that we use the
+ * "lite_spot()" function to display the player grid, if needed.
+ */
+extern void prt_map(void);
+
+/** @fn verify_panel()
+ * @brief Updates stuff if panel changed.
+ * @return void
+ *
+ * Redraws screen and figures new borders if the panel the player
+ * is in has changed.
+ */
+extern void verify_panel(void);
+
+extern bool change_panel(s32b dy, s32b dx);
+
+/** @fn player_can_enter()
+ * @brief Can player enter a feature?
+ * @brief feature Byte feature index
+ * @return bool
+ *
+ * Determines if the player can enter a particular feature type,
+ * taking into account how high the player can fly, the player's
+ * PASS_WALL flags, and the featue's "can_enter" field.
+ */
+extern bool player_can_enter(byte feature);
+
+/** @def DUNGEON_MODE_NONE
+ * @dgonly
+ */
+#define DUNGEON_MODE_NONE       0
+
+/** @def DUNGEON_MODE_AND
+ * @dgonly
+ */
+#define DUNGEON_MODE_AND        1
+
+/** @def DUNGEON_MODE_NAND
+ * @dgonly
+ */
+#define DUNGEON_MODE_NAND       2
+
+/** @def DUNGEON_MODE_OR
+ * @dgonly
+ */
+#define DUNGEON_MODE_OR         3
+
+/** @def DUNGEON_MODE_NOR
+ * @dgonly
+ */
+#define DUNGEON_MODE_NOR        4
+
+/** @var max_dlv[max_d_idx]
+ * @brief Number
+ * @note Maximun dungeon levels(for recall)
+ */
+extern s16b max_dlv[max_d_idx];
+
+/** @var wildc2i[256]
+ * @brief Number
+ */
+extern s32b wildc2i[256];
+
+/** @fn reveal_wilderness_around_player(s32b y, s32b x, s32b h, s32b w)
+ * @brief Show a small radius of wilderness around the player
+ * @param y Number
+ * @param x Number
+ * @param h Number
+ * @param w Number
+ * @return void
+ * @note Show a small radius of wilderness around the player
+ */
+extern void reveal_wilderness_around_player(s32b y, s32b x, s32b h, s32b w);
+
+$bool special_level_get(s32b dungeon, s32b level, bool set) { if (set == -1) return special_lvl[level][dungeon]; else { special_lvl[level][dungeon] = set; return set; } }
+bool special_level_get@special_lvl(s32b dungeon, s32b level, bool set=-1);
+
+extern bool generate_special_feeling;
+
+extern store_type *store_type_new();
+extern void store_type_del(store_type *store);
+extern store_type *store_type_dup(store_type *store);
+
+/** @struct store_type
+ * @{ */
+struct store_type
+{
+	u16b st_idx;
+
+	u16b owner;                     /* Owner index */
+
+	s16b insult_cur;		/* Insult counter */
+
+	s16b good_buy;			/* Number of "good" buys */
+	s16b bad_buy;			/* Number of "bad" buys */
+
+	s32b store_open;		/* Closed until this turn */
+
+	s32b last_visit;		/* Last visited on this turn */
+
+	flags_type stock;		/* Stock -- Actual stock items */
+};
+/** @} */
+
+/** @struct store_info_type
+ * @{ */
+struct store_info_type
+{
+	cptr name;                      /* Name (offset) */
+
+	flags_type table;   		/* Table -- Legal item kinds */
+	s16b max_obj;                   /* Number of items this store can hold */
+
+	s32b buy;			/* Lua Function that allows buying */
+
+	cptr store_maker;		/* The store creator to use */
+	s16b store_make_num;		/* The number of items to fill the shop with */
+
+	u16b owners[4];                 /* List of owners(refers to ow_info) */
+
+	u16b actions[6];                /* Actions(refers to ba_info) */
+
+	byte d_attr;			/* Default building attribute */
+	char d_char;			/* Default building character */
+
+	byte x_attr;			/* Desired building attribute */
+	char x_char;			/* Desired building character */
+
+	flags_type flags;       /* flags */
+};
+/** @} */
+
+extern store_info_type st_info[max_st_idx];
+
+/** @struct store_action_type
+ * @{ */
+struct store_action_type
+{
+	cptr name;                      /* Name (offset) */
+
+	s16b costs[3];                  /* Costs for liked people */
+	char letter;                    /* Action letter */
+	char letter_aux;                /* Action letter */
+	s32b action;                    /* Action code */
+	s16b action_restr;              /* Action restriction */
+};
+/** @} */
+
+extern store_action_type ba_info[max_ba_idx];
+
+/** @struct owner_type
+ * @{ */
+struct owner_type
+{
+	cptr name;                      /* Name (offset) */
+
+	s16b max_cost;                  /* Purse limit */
+
+	byte max_inflate;               /* Inflation (max) */
+	byte min_inflate;               /* Inflation (min) */
+
+	byte haggle_per;                /* Haggle unit */
+
+	byte insult_max;                /* Insult limit */
+
+	flags_type races[2];                  /* Liked/hated races */
+	flags_type classes[2];                /* Liked/hated classes */
+
+	s16b costs[3];                  /* Costs for liked people */
+};
+/** @} */
+
+extern owner_type ow_info[max_ow_idx];
+
+/* Stores/buildings defines */
+#define STORE_HATED     0
+#define STORE_LIKED     1
+#define STORE_NORMAL    2
+
+/* Saved seeds */
+extern u32b seed_flavor;
+extern u32b seed_town;
+extern u32b seed_dungeon;
+
+/** @struct feature_type
+ * @brief A structure describing floor(or wall or whatever) type
+ * @{ */
+struct feature_type
+{
+	cptr name;              /* Name (offset) */
+	cptr text;              /* Text (offset) */
+	cptr block;             /* Text for blocking */
+
+	s32b can_enter;         /* A lua function that allows or no passage */
+
+	s16b mimic;             /* Feature to mimic */
+
+	flags_type flags;       /* flags */
+
+	byte extra;             /* Extra byte (unused) */
+
+	s16b unused;		/* Extra bytes (unused) */
+
+	byte d_attr;		/* Default feature attribute */
+	char d_char;		/* Default feature character */
+
+
+	byte x_attr;		/* Desired feature attribute */
+	char x_char;		/* Desired feature character */
+
+	byte shimmer[7];        /* Shimmer colors */
+
+	s16b d_dice[4];                  /* Number of dices */
+	s16b d_side[4];                  /* Number of sides */
+	s16b d_frequency[4];             /* Frequency of damage (1 is the minimum) */
+	s16b d_type[4];                  /* Type of damage */
+
+	s16b priority;          /* Drawing priority */
+
+	cptr load_script;
+};
+/** @} */
+
+extern u16b max_f_idx;
+extern feature_type f_info[max_f_idx];
+
+/** @struct vault_type
+ * @brief A structure describing vaults
+ * @{ */
+struct vault_type
+{
+	cptr name;			/* Name (offset) */
+	cptr text;			/* Text (offset) */
+
+	byte typ;			/* Vault type */
+
+	byte rat;			/* Vault rating */
+
+	byte hgt;			/* Vault height */
+	byte wid;			/* Vault width */
+
+	s16b lvl;                       /* level of special (if any) */
+	byte dun_type;                  /* Dungeon type where the level will show up */
+
+	s16b mon[10];                   /* special monster */
+	s16b item[3];                   /* number of item (usually artifact) */
+
+	flags_type flags;
+
+	cptr load_script;
+};
+/** @} */
+
+extern u16b max_v_idx;
+extern vault_type v_info[max_v_idx];
+
+extern bool wild_see_through;
+
+extern bool use_corpse_decay;
+
+module dungeon_generator {
+#define ROOM_TYPE_NORMAL	1
+#define ROOM_TYPE_OVERLAPPING	2
+#define ROOM_TYPE_CROSS		3
+#define ROOM_TYPE_LARGE		4
+#define ROOM_TYPE_NEST		5
+#define ROOM_TYPE_PIT		6
+#define ROOM_TYPE_LESSER_VAULT	7
+#define ROOM_TYPE_GREATER_VAULT	8
+#define ROOM_TYPE_CIRCULAR	9
+#define ROOM_TYPE_FRACTAL	10
+#define ROOM_TYPE_RANDOM_VAULT	11
+#define ROOM_TYPE_CRYPT		12
+
+	extern void recursive_river(s32b x1, s32b y1, s32b x2, s32b y2, s32b feat1, s32b feat2, s32b width);
+	extern bool room_build(s32b y, s32b x, s32b typ);
+	extern void dungeon_set_level_size@set_level_size(s32b hgt, s32b wid);
+}
+
+module realtime {
+extern void realtime_mode @ __switch(u32b millis_per_turn);
+extern u32b realtime_freq @ millis_per_turn;
+extern u32b realtime_run_factor @ run_factor;
+}
+
+#define KILLWALL_FAILURE @ KILLWALL_FAILURE
+#define KILLWALL_WORKING @ KILLWALL_WORKING
+#define KILLWALL_DONE    @ KILLWALL_DONE

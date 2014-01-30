@@ -1,0 +1,93 @@
+-- Defines the default symbols for the town features
+
+-- Mountain chain
+map.symbol{ symbol='^' feat=FEAT_MOUNTAIN info=3 }
+
+-- Floor
+map.symbol{ symbol='.' feat=FEAT_FLOOR info=3 }
+
+-- Trees
+map.symbol{ symbol='T' feat=FEAT_TREES info=3 }
+
+-- Deep water
+map.symbol{ symbol='W' feat=FEAT_DEEP_WATER info=3 }
+
+-- Shallow water
+map.symbol{ symbol='V' feat=FEAT_SHAL_WATER info=3 }
+
+-- Deep Lava
+map.symbol{ symbol='L' feat=FEAT_DEEP_LAVA info=3 }
+
+-- Shallow Lava
+map.symbol{ symbol='K' feat=FEAT_SHAL_LAVA info=3 }
+
+-- Chasm
+map.symbol{ symbol='C' feat=FEAT_DARK_PIT info=3 }
+
+-- Dirt
+map.symbol{ symbol=',' feat=FEAT_DIRT info=3 }
+
+-- Mud
+map.symbol{ symbol='@' feat=FEAT_MUD info=3 }
+
+-- Rubble
+map.symbol{ symbol=';' feat=FEAT_RUBBLE info=3 }
+
+-- Grass
+map.symbol{ symbol='-' feat=FEAT_GRASS info=3 }
+
+-- Permanent wall
+map.symbol{ symbol='#' feat=FEAT_PERM_SOLID info=3 }
+
+-- Brick Roof
+map.symbol{ symbol='s' feat=FEAT_BRICK_ROOF info=3 }
+-- Brick Roof Top
+map.symbol{ symbol='S' feat=FEAT_BRICK_ROOF_TOP info=3 }
+-- Brick Roof Chimney
+map.symbol{ symbol='t' feat=FEAT_BRICK_ROOF_CHIMNEY info=3 }
+
+-- Grass Roof
+map.symbol{ symbol='X' feat=FEAT_GRASS_ROOF info=3 }
+-- Grass Roof Top
+map.symbol{ symbol='U' feat=FEAT_GRASS_ROOF_TOP info=3 }
+-- Grass Roof Chimney
+map.symbol{ symbol='Y' feat=FEAT_GRASS_ROOF_CHIMNEY info=3 }
+
+-- Cobblestone Road
+map.symbol{ symbol='O' feat=FEAT_COBBLESTONE_ROAD info=3 }
+
+-- General Store
+map.symbol{ symbol='1' feat=FEAT_SHOP info=3 building=store.STORE_GENERAL }
+
+-- Armoury
+map.symbol{ symbol='2' feat=FEAT_SHOP info=3 building=store.STORE_ARMOURY }
+
+-- Weapons Smith
+map.symbol{ symbol='3' feat=FEAT_SHOP info=3 building=store.STORE_WEAPONS }
+
+-- Temple
+map.symbol{ symbol='4' feat=FEAT_SHOP info=3 building=store.STORE_TEMPLE }
+
+-- Alchemy Shop
+map.symbol{ symbol='5' feat=FEAT_SHOP info=3 building=store.STORE_ALCHEMY }
+
+-- Magic Shop
+map.symbol{ symbol='6' feat=FEAT_SHOP info=3 building=store.STORE_MAGIC }
+
+-- Black Market
+map.symbol{ symbol='7' feat=FEAT_SHOP info=3 building=store.STORE_MARKET }
+
+-- Home
+map.symbol{ symbol='8' feat=FEAT_SHOP info=3 building=store.STORE_HOME }
+
+-- Bookstore
+map.symbol{ symbol='9' feat=FEAT_SHOP info=3 building=store.STORE_BOOKS }
+
+-- Pet Shop
+map.symbol{ symbol='0' feat=FEAT_SHOP info=3 building=store.STORE_PETS }
+
+-- Underground Tunnels -- used for tunnels in towns
+map.symbol{ symbol='I' feat=FEAT_UNDERGROUND_TUNNEL info=3 }
+
+-- Underground Tunnels -- used for tunnels in towns
+map.symbol{ symbol='M' feat=FEAT_UNDERGROUND_TUNNEL_MOUNTAIN info=3 }

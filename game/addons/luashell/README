@@ -1,0 +1,15 @@
+ToME Lua Shell
+
+A quick'n'dirty lua shell for debugging and experimenting.
+
+Drop the whole luashell directory inside your lib/patch
+directory. ToME should autoload it. It should work with 2.2 and CVS,
+but it's mainly tested against CVS.
+
+Then do:
+
+^A>shell.run()
+
+(I make a macro for it on my debugging characters)
+
+There is help included.

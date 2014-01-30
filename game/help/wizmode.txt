@@ -1,0 +1,30 @@
+|||||oy
+~~~~~01|Wizard mode
+#####RWizard mode commands
+#####R==============================================
+
+ ^W  Enables wizmode, and toggles wizmode on and off
+ ^A  Do a debug command
+
+Debug commands:
+
+ *****wizmode.txt*0[t  Teleport]                    *****wizmode.txt*0[a  Cure all]
+ *****wizmode.txt*0[b  Teleport to target]          *****wizmode.txt*0[B  New body]
+ *****wizmode.txt*0[p  Phase door]                  *****wizmode.txt*0[h  Re-roll life rating]
+ *****wizmode.txt*0[D  Teleport to dungeon]         *****wizmode.txt*0[x  Gain experience]
+ *****wizmode.txt*0[T  Teleport to town]            *****wizmode.txt*0[M  Gain corruption]
+ *****wizmode.txt*0[j  Change dungeon level]        *****wizmode.txt*0[*  Mimic shape change]
+ *****wizmode.txt*0[g  Get good objects]            *****wizmode.txt*0[e  Edit character]
+ *****wizmode.txt*0[v  Get very good objects]       *****wizmode.txt*0[k  Self knowledge]
+ *****wizmode.txt*0[c  Create object via menu]      *****wizmode.txt*0[i  Identify object]
+ *****wizmode.txt*0[-  Create object via number]    *****wizmode.txt*0[f  *Identify* object]
+ *****wizmode.txt*0[C  Create named artifact]       *****wizmode.txt*0[l  Learn about objects]
+ *****wizmode.txt*0[o  Modify object]               *****wizmode.txt*0[m  Magic mapping]
+ *****wizmode.txt*0[s  Summon random monsters]      *****wizmode.txt*0[w  Wizard light level]
+ *****wizmode.txt*0[H  Summon horde]                *****wizmode.txt*0[u  Make level known]
+ *****wizmode.txt*0[n  Summon named monster]        *****wizmode.txt*0[F  Change map feature]
+ *****wizmode.txt*0[N  Summon friendly named]       *****wizmode.txt*0[R  Create trap]
+ *****wizmode.txt*0[z  Kill all monsters]           *****wizmode.txt*0[E  Change grid's mana]
+ *****wizmode.txt*0[=  Make monster ally]           *****wizmode.txt*0[W  Make a wish]
+ *****wizmode.txt*0[@  Increase monster level]      *****wizmode.txt*0[>  Do LUA script]
+ *****wizmode.txt*0[/  Summon specific]             *****wizmode.txt*0[P  Panic save game]

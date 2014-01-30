@@ -1,0 +1,11 @@
+map.define("Wilderness")
+
+map.wild.map
+{
+[[XXX]],
+[[X1X]],
+[[XXX]],
+}
+
+-- Starting position
+map.wild.start(1, 1)
